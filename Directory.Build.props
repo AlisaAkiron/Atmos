@@ -1,0 +1,44 @@
+<Project>
+
+    <!-- Project -->
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>12</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <!-- Documentation -->
+    <PropertyGroup Condition="$(Configuration) == 'Debug'">
+        <NoWarn>CS1591</NoWarn>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <!-- Analyzer -->
+    <PropertyGroup>
+        <AnalysisLevel>8.0</AnalysisLevel>
+        <AnalysisMode>Recommended</AnalysisMode>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    </PropertyGroup>
+
+    <!-- Global Packages -->
+    <ItemGroup>
+        <PackageReference Include="SonarAnalyzer.CSharp" Condition=" '$(MSBuildProjectExtension)' == '.csproj' ">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <!-- Assembly Meta -->
+    <PropertyGroup>
+        <Authors>Alisa</Authors>
+        <Company>Alisa Lab</Company>
+        <Copyright>Copyright © 2023 Alisa and Contributors.</Copyright>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/LiamSho/Atmos.git</RepositoryUrl>
+        <NeutralLanguage>en-US</NeutralLanguage>
+    </PropertyGroup>
+
+</Project>
