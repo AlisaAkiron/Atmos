@@ -58,12 +58,15 @@ public static class Extensions
             logging.IncludeScopes = true;
         });
 
+        var otelSvcName = builder.Configuration["OTEL_SERVICE_NAME"] ?? "Unknown";
+
         builder.Services.AddOpenTelemetry()
             .WithMetrics(metrics =>
             {
                 metrics
                     .AddRuntimeInstrumentation()
-                    .AddBuiltInMeters();
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation();
             })
             .WithTracing(tracing =>
             {
@@ -71,6 +74,8 @@ public static class Extensions
                 {
                     tracing.SetSampler(new AlwaysOnSampler());
                 }
+
+                tracing.AddSource(otelSvcName);
 
                 tracing
                     .AddAspNetCoreInstrumentation()
@@ -111,7 +116,9 @@ public static class Extensions
                 {
                     options.IncludedData = IncludedData.TraceIdField | IncludedData.SpanIdField;
                     options.Endpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] ?? "";
+                    options.Protocol = OtlpProtocol.Grpc;
 
+                    var serviceName = builder.Configuration["OTEL_SERVICE_NAME"] ?? "Unknown";
                     var headers = builder.Configuration["OTEL_EXPORTER_OTLP_HEADERS"]?.Split(',') ?? [];
                     var resources = builder.Configuration["OTEL_RESOURCE_ATTRIBUTES"];
 
@@ -138,6 +145,11 @@ public static class Extensions
                         {
                             throw new InvalidOperationException($"Invalid resource attribute format: {resources}");
                         }
+                    }
+
+                    if (options.ResourceAttributes.ContainsKey("service.name") is false)
+                    {
+                        options.ResourceAttributes["service.name"] = serviceName;
                     }
                 });
         });
@@ -183,13 +195,5 @@ public static class Extensions
         }
 
         return builder;
-    }
-
-    private static MeterProviderBuilder AddBuiltInMeters(this MeterProviderBuilder builder)
-    {
-        return builder.AddMeter(
-            "Microsoft.AspNetCore.Hosting",
-            "Microsoft.AspNetCore.Server.Kestrel",
-            "System.Net.Http");
     }
 }
