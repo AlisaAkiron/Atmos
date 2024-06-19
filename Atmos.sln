@@ -11,9 +11,35 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atmos.Services.Default", "src\Atmos.Services.Default\Atmos.Services.Default.csproj", "{C54F874D-A343-40E8-ACEC-29536381B4B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atmos.AppHost", "src\Atmos.AppHost\Atmos.AppHost.csproj", "{D26A897A-3CFF-49F5-9C11-0D046C4DF736}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atmos.Api", "src\Atmos.Api\Atmos.Api.csproj", "{B154742A-6B9B-4438-A7DB-0664093F887C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aspire", "Aspire", "{AE7D4626-A561-42C8-8B61-770D16417AAF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C54F874D-A343-40E8-ACEC-29536381B4B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C54F874D-A343-40E8-ACEC-29536381B4B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C54F874D-A343-40E8-ACEC-29536381B4B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C54F874D-A343-40E8-ACEC-29536381B4B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D26A897A-3CFF-49F5-9C11-0D046C4DF736}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D26A897A-3CFF-49F5-9C11-0D046C4DF736}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D26A897A-3CFF-49F5-9C11-0D046C4DF736}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D26A897A-3CFF-49F5-9C11-0D046C4DF736}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B154742A-6B9B-4438-A7DB-0664093F887C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B154742A-6B9B-4438-A7DB-0664093F887C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B154742A-6B9B-4438-A7DB-0664093F887C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B154742A-6B9B-4438-A7DB-0664093F887C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D26A897A-3CFF-49F5-9C11-0D046C4DF736} = {AE7D4626-A561-42C8-8B61-770D16417AAF}
+		{C54F874D-A343-40E8-ACEC-29536381B4B9} = {AE7D4626-A561-42C8-8B61-770D16417AAF}
 	EndGlobalSection
 EndGlobal
