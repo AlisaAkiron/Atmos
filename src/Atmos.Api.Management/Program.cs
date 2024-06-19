@@ -10,6 +10,6 @@ var app = builder.Build();
 
 app.MapAtmosDefaultEndpoints();
 
-app.MapGet("/", () => "Hello World! (Content API)");
+app.MapGet("/", () => "Hello World! (Management API)");
 
 await app.RunAsync();
