@@ -1,6 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
-  <ItemGroup>
-    <ProjectReference Include="..\Atmos.Services.Api\Atmos.Services.Api.csproj" />
-    <ProjectReference Include="..\Atmos.Services.Default\Atmos.Services.Default.csproj" />
-  </ItemGroup>
-</Project>

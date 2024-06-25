@@ -12,14 +12,9 @@ var apiContent = builder
     .AddProject<Projects.Atmos_Api_Content>("api-content")
     .WithReference(postgres);
 
-var apiManagement = builder
-    .AddProject<Projects.Atmos_Api_Management>("api-management")
-    .WithReference(postgres);
-
 builder
     .AddProject<Projects.Atmos_Web>("web")
-    .WithReference(apiContent)
-    .WithReference(apiManagement);
+    .WithReference(apiContent);
 
 var app = builder.Build();
 
