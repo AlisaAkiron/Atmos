@@ -1,4 +1,4 @@
-using Atmos.Domain.Abstract;
+using Atmos.Domain.Entities.Abstract;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 

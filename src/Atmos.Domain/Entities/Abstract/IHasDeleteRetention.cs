@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Atmos.Domain.Abstract;
+namespace Atmos.Domain.Entities.Abstract;
 
 public interface IHasDeleteRetention
 {

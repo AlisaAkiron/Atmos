@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Atmos.Domain.Abstract;
+using Atmos.Domain.Entities.Abstract;
 using Atmos.Domain.Entities.Identity;
 
 namespace Atmos.Domain.Entities.Content;
@@ -17,6 +17,9 @@ public record Comment : IHasDeleteRetention
 
     [Column("author")]
     public User Author { get; set; } = null!;
+
+    [Column("parent")]
+    public Comment? Parent { get; set; }
 
     /// <inheritdoc />
     public bool IsDeleted { get; set; }
