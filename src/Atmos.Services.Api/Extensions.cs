@@ -1,7 +1,11 @@
 using System.Reflection;
+using Asp.Versioning;
 using Atmos.Services.Api.Abstract;
 using Atmos.Services.Api.Components;
+using Atmos.Services.Api.Models;
+using Atmos.Services.Api.Swagger;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,9 +19,19 @@ public static class Extensions
     public static IHostApplicationBuilder AddAtmosApiServices(this IHostApplicationBuilder builder)
     {
         builder.ConfigureNpgsql();
+        builder.ConfigureIdentity();
 
-        builder.Services.AddControllers();
+        builder.Services.AddProblemDetails();
         builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddApiVersioning(options =>
+        {
+            options.DefaultApiVersion = new ApiVersion(1);
+            options.ReportApiVersions = true;
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ApiVersionReader = new HeaderApiVersionReader("X-Atmos-Api-Version");
+            options.UnsupportedApiVersionStatusCode = StatusCodes.Status400BadRequest;
+        })
+        .EnableApiVersionBinding();
 
         builder.Services.AddCors(options =>
         {
@@ -36,7 +50,10 @@ public static class Extensions
             {
                 Version = "v1"
             });
+
+            options.AddOperationFilterInstance(new ApiVersionHeaderFilter());
         });
+
 
         return builder;
     }
@@ -59,14 +76,36 @@ public static class Extensions
 
     public static WebApplication MapAtmosApiEndpoints(this WebApplication app)
     {
+        app.UseExceptionHandler(builder =>
+        {
+            builder.Run(async ctx =>
+            {
+                var exception = ctx.Features.Get<IExceptionHandlerFeature>()?.Error;
+                var exceptionName = exception?.GetType().Name ?? "Unknown";
+                var msg = exception?.Message ?? "Unknown exception issue";
+                var resp = new ErrorResponse($"{exceptionName}: {msg}");
+                ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                await ctx.Response.WriteAsJsonAsync(resp);
+            });
+        });
+        app.UseStatusCodePages(async ctx =>
+        {
+            var code = ctx.HttpContext.Response.StatusCode;
+            var msg = new ErrorResponse($"Failed: Get status code {code}");
+            await ctx.HttpContext.Response.WriteAsJsonAsync(msg);
+        });
+
         app.UseCors();
 
         app.UseAuthentication();
         app.UseAuthorization();
 
+        var api = app.NewVersionedApi();
+
         if (app.Environment.IsProduction() is false)
         {
-            app.MapGet("/", () => TypedResults.Redirect("/scalar/api-content"))
+            api.MapGet("/", () => TypedResults.Redirect("/scalar/api-content"))
+                .HasApiVersion(1)
                 .ExcludeFromDescription();
         }
 
@@ -75,9 +114,11 @@ public static class Extensions
             .Where(x => x.GetInterface(nameof(IEndpointMapper)) is not null)
             .Select(x => x.GetMethod(nameof(IEndpointMapper.MapEndpoints), BindingFlags.Public | BindingFlags.Static));
 
+        var apiGroup = api.MapGroup("/api");
+
         foreach (var mapper in mappers)
         {
-            mapper?.Invoke(null, [app]);
+            mapper?.Invoke(null, [apiGroup]);
         }
 
         return app;
