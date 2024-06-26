@@ -4,4 +4,10 @@
       <ProjectReference Include="..\Atmos.Services.Api\Atmos.Services.Api.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="appsettings*.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
