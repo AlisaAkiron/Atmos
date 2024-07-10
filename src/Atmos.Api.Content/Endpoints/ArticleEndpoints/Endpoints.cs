@@ -1,7 +1,7 @@
 ﻿using Atmos.Services.Api.Abstract;
 using Atmos.Services.Api.Models;
 
-namespace Atmos.Api.Content.Endpoints.Content;
+namespace Atmos.Api.Content.Endpoints.ArticleEndpoints;
 
 public class ArticleEndpoints : IEndpointMapper
 {
@@ -24,10 +24,10 @@ public class ArticleEndpoints : IEndpointMapper
                 _ => Results.Ok(slug)
             };
         })
-        .WithSummary("Get a single article by slug, including content");
+        .WithDescription("Get a single article by slug, including content");
 
         // GET all
         articleGroup.MapGet("/", () => "all")
-            .WithSummary("Get all articles");
+            .WithDescription("Get all articles");
     }
 }

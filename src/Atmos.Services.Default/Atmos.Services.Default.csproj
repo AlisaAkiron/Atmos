@@ -1,13 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  
+
   <PropertyGroup>
     <IsAspireSharedProject>true</IsAspireSharedProject>
   </PropertyGroup>
-  
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Alexinea.Extensions.Configuration.Yaml" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
@@ -19,7 +15,6 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
     <PackageReference Include="Serilog.Enrichers.Context" />
     <PackageReference Include="Serilog.Enrichers.Process" />
-    <PackageReference Include="Serilog.Enrichers.Span" />
     <PackageReference Include="Serilog.Enrichers.Thread" />
     <PackageReference Include="Serilog.Extensions.Hosting" />
     <PackageReference Include="Serilog.Settings.Configuration" />

@@ -7,6 +7,7 @@ using Atmos.Services.Api.Swagger;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
@@ -24,14 +25,14 @@ public static class Extensions
         builder.Services.AddProblemDetails();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddApiVersioning(options =>
-        {
-            options.DefaultApiVersion = new ApiVersion(1);
-            options.ReportApiVersions = true;
-            options.AssumeDefaultVersionWhenUnspecified = true;
-            options.ApiVersionReader = new HeaderApiVersionReader("X-Atmos-Api-Version");
-            options.UnsupportedApiVersionStatusCode = StatusCodes.Status400BadRequest;
-        })
-        .EnableApiVersionBinding();
+            {
+                options.DefaultApiVersion = new ApiVersion(1);
+                options.ReportApiVersions = true;
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ApiVersionReader = new HeaderApiVersionReader("X-Atmos-Api-Version");
+                options.UnsupportedApiVersionStatusCode = StatusCodes.Status400BadRequest;
+            })
+            .EnableApiVersionBinding();
 
         builder.Services.AddCors(options =>
         {
@@ -46,14 +47,12 @@ public static class Extensions
 
         builder.Services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("api-content", new OpenApiInfo
-            {
-                Version = "v1"
-            });
+            var svcName = builder.Configuration.GetOtelServiceName();
+            options.SwaggerDoc(svcName, new OpenApiInfo { Version = "v1" });
 
             options.AddOperationFilterInstance(new ApiVersionHeaderFilter());
+            options.AddDocumentFilterInstance(new DefaultApiFilter());
         });
-
 
         return builder;
     }
@@ -68,6 +67,10 @@ public static class Extensions
         app.UseSwagger(options =>
         {
             options.RouteTemplate = "/openapi/{documentName}.json";
+            options.PreSerializeFilters.Add((oad, req) =>
+            {
+                oad.Servers = [new OpenApiServer { Url = $"{req.Scheme}://{req.Host.Value}" }];
+            });
         });
         app.MapScalarApiReference();
 
@@ -97,14 +100,15 @@ public static class Extensions
 
         app.UseCors();
 
-        app.UseAuthentication();
-        app.UseAuthorization();
+        // app.UseAuthentication();
+        // app.UseAuthorization();
 
         var api = app.NewVersionedApi();
 
         if (app.Environment.IsProduction() is false)
         {
-            api.MapGet("/", () => TypedResults.Redirect("/scalar/api-content"))
+            var svcName = app.Configuration.GetOtelServiceName();
+            api.MapGet("/", () => TypedResults.Redirect($"/scalar/{svcName}"))
                 .HasApiVersion(1)
                 .ExcludeFromDescription();
         }
@@ -122,5 +126,10 @@ public static class Extensions
         }
 
         return app;
+    }
+
+    private static string GetOtelServiceName(this IConfiguration configuration)
+    {
+        return configuration["OTEL_SERVICE_NAME"] ?? "Unknown";
     }
 }

@@ -10,11 +10,11 @@ namespace Atmos.Services.Api.Components;
 
 public static class NpgsqlEntityFrameworkCore
 {
-    internal static IHostApplicationBuilder ConfigureNpgsql(this IHostApplicationBuilder builder)
+    public static IHostApplicationBuilder ConfigureNpgsql(this IHostApplicationBuilder builder)
     {
         var connectionString = builder.Configuration.GetConnectionString("postgresql-database");
 
-        builder.Services.AddDbContextPool<AtmosDbContext>(options =>
+        builder.Services.AddDbContext<AtmosDbContext>(options =>
         {
             options.UseNpgsql(connectionString);
 

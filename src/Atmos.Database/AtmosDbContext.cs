@@ -30,15 +30,15 @@ public class AtmosDbContext : DbContext
 
     #region Content
 
-    public DbSet<Article> Articles { get; set; }
+    public DbSet<Article> Articles => Set<Article>();
 
-    public DbSet<Comment> Comments { get; set; }
+    public DbSet<Comment> Comments => Set<Comment>();
 
     #endregion
 
     #region Identity
 
-    protected DbSet<User> Users { get; set; }
+    protected DbSet<User> Users => Set<User>();
 
     #endregion
 }

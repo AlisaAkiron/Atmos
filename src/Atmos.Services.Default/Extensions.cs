@@ -10,7 +10,6 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Serilog;
-using Serilog.Enrichers.Span;
 using Serilog.Sinks.OpenTelemetry;
 
 namespace Atmos.Services.Default;
@@ -132,7 +131,6 @@ public static class Extensions
                 .Enrich.WithProcessId()
                 .Enrich.WithProcessName()
                 .Enrich.WithThreadId()
-                .Enrich.WithSpan()
                 .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
                 .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
                 .WriteTo.OpenTelemetry(options =>
