@@ -1,4 +1,3 @@
-using Atmos.Database.Interceptors;
 using Atmos.Domain.Entities.Content;
 using Atmos.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,15 +11,6 @@ public class AtmosDbContext : DbContext
     }
 
     /// <inheritdoc />
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder
-            .AddInterceptors(new DeleteRetentionInterceptor());
-
-        base.OnConfiguring(optionsBuilder);
-    }
-
-    /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AtmosDbContext).Assembly);
@@ -31,14 +21,16 @@ public class AtmosDbContext : DbContext
     #region Content
 
     public DbSet<Article> Articles => Set<Article>();
-
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<Note> Notes => Set<Note>();
+    public DbSet<SinglePage> SinglePages => Set<SinglePage>();
 
     #endregion
 
     #region Identity
 
-    protected DbSet<User> Users => Set<User>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<User> Users => Set<User>();
 
     #endregion
 }

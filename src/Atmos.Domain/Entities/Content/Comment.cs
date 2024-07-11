@@ -21,6 +21,18 @@ public record Comment : IHasDeleteRetention
     [Column("parent")]
     public Comment? Parent { get; set; }
 
+    [Column("children")]
+    public List<Comment>? Children { get; set; }
+
+    [Column("author_id")]
+    public Guid AuthorId { get; set; }
+
+    [Column("commentable_entity_id")]
+    public string CommentableEntityId { get; set; } = string.Empty;
+
+    [Column("commentable_entity_type")]
+    public string CommentableEntityType { get; set; } = string.Empty;
+
     /// <inheritdoc />
     public bool IsDeleted { get; set; }
 

@@ -1,6 +1,6 @@
 ﻿namespace Atmos.Domain.Enums;
 
-public enum ContentType
+public enum SubscriptionContentType
 {
     BlogPost,
     Note

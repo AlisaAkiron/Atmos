@@ -4,13 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Atmos.Database.Configuration.Content;
 
-public class ArticleConfiguration : IEntityTypeConfiguration<Article>
+public class NoteConfiguration : IEntityTypeConfiguration<Note>
 {
     /// <inheritdoc />
-    public void Configure(EntityTypeBuilder<Article> builder)
+    public void Configure(EntityTypeBuilder<Note> builder)
     {
-        builder.HasIndex(x => x.Classification);
-
         builder.HasMany(x => x.Comments)
             .WithOne()
             .HasForeignKey(x => new
@@ -21,7 +19,7 @@ public class ArticleConfiguration : IEntityTypeConfiguration<Article>
             .HasPrincipalKey(x => new
             {
                 id = x.Slug,
-                type = "article"
+                type = "note"
             });
     }
 }

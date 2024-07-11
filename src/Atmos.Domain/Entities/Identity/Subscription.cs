@@ -12,8 +12,11 @@ public record Subscription
     public Guid Id { get; set; }
 
     [Column("region")]
-    public List<ContentType> Region { get; set; } = [];
+    public List<SubscriptionContentType> Region { get; set; } = [];
 
     [Column("user")]
     public User User { get; set; } = null!;
+
+    [Column("user_id")]
+    public Guid UserId { get; set; }
 }

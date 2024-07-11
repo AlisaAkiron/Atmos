@@ -9,4 +9,10 @@ public interface IHasDeleteRetention
 
     [Column("delete_time")]
     public DateTimeOffset? DeleteTime { get; set; }
+
+    public void Delete()
+    {
+        IsDeleted = true;
+        DeleteTime = DateTimeOffset.Now;
+    }
 }
