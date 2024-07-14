@@ -9,19 +9,18 @@ public class ArticleConfiguration : IEntityTypeConfiguration<Article>
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<Article> builder)
     {
-        builder.HasIndex(x => x.Classification);
-
         builder.HasMany(x => x.Comments)
             .WithOne()
             .HasForeignKey(x => new
             {
-                id = x.CommentableEntityId,
-                type = x.CommentableEntityType
+                x.CommentableEntityId, x.CommentableEntityType
             })
             .HasPrincipalKey(x => new
             {
-                id = x.Slug,
-                type = "article"
+                x.Slug, x.ContentType
             });
+
+        builder.HasOne(x => x.Classification)
+            .WithMany();
     }
 }

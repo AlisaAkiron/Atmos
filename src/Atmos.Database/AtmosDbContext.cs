@@ -21,6 +21,7 @@ public class AtmosDbContext : DbContext
     #region Content
 
     public DbSet<Article> Articles => Set<Article>();
+    public DbSet<Classification> Classifications => Set<Classification>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<Note> Notes => Set<Note>();
     public DbSet<SinglePage> SinglePages => Set<SinglePage>();

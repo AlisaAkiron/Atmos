@@ -14,6 +14,9 @@ public record Article : IHasDeleteRetention, IHasComments
     [Column("title")]
     public string Title { get; set; } = string.Empty;
 
+    [Column("summary")]
+    public string Summary { get; set; } = string.Empty;
+
     [Column("content")]
     public string Content { get; set; } = string.Empty;
 
@@ -27,10 +30,13 @@ public record Article : IHasDeleteRetention, IHasComments
     public bool IsDraft { get; set; }
 
     [Column("classification")]
-    public string Classification { get; set; } = string.Empty;
+    public Classification Classification { get; set; } = null!;
 
     /// <inheritdoc />
     public List<Comment> Comments { get; set; } = [];
+
+    /// <inheritdoc />
+    public string ContentType { get; private set; } = "article";
 
     /// <inheritdoc />
     public bool IsDeleted { get; set; }

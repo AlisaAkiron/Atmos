@@ -7,4 +7,7 @@ public interface IHasComments
 {
     [Column("comments")]
     public List<Comment> Comments { get; set; }
+
+    [Column("content_type")]
+    public string ContentType { get; }
 }

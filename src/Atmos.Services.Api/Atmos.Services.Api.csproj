@@ -11,10 +11,12 @@
   
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Http" />
+    <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
+    <PackageReference Include="Riok.Mapperly" />
     <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
   </ItemGroup>

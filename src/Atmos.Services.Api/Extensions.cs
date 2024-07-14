@@ -50,6 +50,12 @@ public static class Extensions
             var svcName = builder.Configuration.GetOtelServiceName();
             options.SwaggerDoc(svcName, new OpenApiInfo { Version = "v1" });
 
+            var xmlFiles = Directory.GetFiles(AppContext.BaseDirectory, "Atmos.*.xml");
+            foreach (var xmlFile in xmlFiles)
+            {
+                options.IncludeXmlComments(xmlFile);
+            }
+
             options.AddOperationFilterInstance(new ApiVersionHeaderFilter());
             options.AddDocumentFilterInstance(new DefaultApiFilter());
         });

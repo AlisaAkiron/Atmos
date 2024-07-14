@@ -13,13 +13,11 @@ public class NoteConfiguration : IEntityTypeConfiguration<Note>
             .WithOne()
             .HasForeignKey(x => new
             {
-                id = x.CommentableEntityId,
-                type = x.CommentableEntityType
+                x.CommentableEntityId, x.CommentableEntityType
             })
             .HasPrincipalKey(x => new
             {
-                id = x.Slug,
-                type = "note"
+                x.Slug, x.ContentType
             });
     }
 }

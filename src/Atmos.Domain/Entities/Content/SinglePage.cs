@@ -27,4 +27,7 @@ public record SinglePage : IHasComments
 
     /// <inheritdoc />
     public List<Comment> Comments { get; set; } = [];
+
+    /// <inheritdoc />
+    public string ContentType { get; private set; } = "single-page";
 }
