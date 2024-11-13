@@ -3,7 +3,6 @@ using Atmos.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
-using OpenTelemetry.Trace;
 
 namespace Atmos.Worker.Migrator;
 
@@ -46,7 +45,7 @@ public class Worker : BackgroundService
         }
         catch (Exception ex)
         {
-            activity?.RecordException(ex);
+            activity?.AddException(ex);
             throw;
         }
 
