@@ -1,4 +1,5 @@
-﻿using Atmos.Database;
+﻿using System.ComponentModel;
+using Atmos.Database;
 using Atmos.Domain.Entities.Content;
 using Atmos.Services.Api.Abstract;
 using Atmos.Services.Api.Common.Dto;
@@ -22,19 +23,12 @@ public class ArticleEndpoints : IEndpointMapper
         articleGroup.MapGet("/{slug}", GetArticleAsync);
     }
 
-    /// <summary>
-    ///     Get all articles
-    /// </summary>
-    /// <param name="dbContext">DbContext from DI</param>
-    /// <param name="classification">Article classification slug, null for no filter</param>
-    /// <param name="skip">How many articles to skip</param>
-    /// <param name="take">How many article to get, default to 20</param>
-    /// <returns>A list of articles</returns>
+    [EndpointSummary("Get all articles")]
     private static async Task<Ok<List<ArticleMetadataDto>>> GetArticlesAsync(
         [FromServices] AtmosDbContext dbContext,
-        [FromQuery(Name = "classification")] string? classification = null,
-        [FromQuery(Name = "skip")] int skip = 0,
-        [FromQuery(Name = "take")] int take = 20)
+        [FromQuery(Name = "classification"), Description("Article classification")]string? classification = null,
+        [FromQuery(Name = "skip"), Description("Skip how many items")] int skip = 0,
+        [FromQuery(Name = "take"), Description("Take how many items")] int take = 20)
     {
         IQueryable<Article> query = dbContext.Articles
             .Where(x => x.IsDeleted == false)
@@ -56,9 +50,10 @@ public class ArticleEndpoints : IEndpointMapper
         return TypedResults.Ok(dtos);
     }
 
+    [EndpointSummary("Get article by slug")]
     private static async Task<Results<Ok<ArticleDto>, NotFound>> GetArticleAsync(
         [FromServices] AtmosDbContext dbContext,
-        [FromRoute(Name = "slug")] string slug)
+        [FromRoute(Name = "slug"), Description("Article slug")] string slug)
     {
         var article = await dbContext.Articles
             .Include(x => x.Classification)

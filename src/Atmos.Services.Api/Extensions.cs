@@ -3,14 +3,13 @@ using Asp.Versioning;
 using Atmos.Services.Api.Abstract;
 using Atmos.Services.Api.Components;
 using Atmos.Services.Api.Models;
-using Atmos.Services.Api.Swagger;
+using Atmos.Services.Api.OpenApi;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 
 namespace Atmos.Services.Api;
@@ -21,6 +20,8 @@ public static class Extensions
     {
         builder.ConfigureNpgsql();
         builder.ConfigureIdentity();
+
+        var svcName = builder.Configuration.GetOtelServiceName();
 
         builder.Services.AddProblemDetails();
         builder.Services.AddEndpointsApiExplorer();
@@ -45,19 +46,10 @@ public static class Extensions
             });
         });
 
-        builder.Services.AddSwaggerGen(options =>
+        builder.Services.AddOpenApi(svcName, options =>
         {
-            var svcName = builder.Configuration.GetOtelServiceName();
-            options.SwaggerDoc(svcName, new OpenApiInfo { Version = "v1" });
-
-            var xmlFiles = Directory.GetFiles(AppContext.BaseDirectory, "Atmos.*.xml");
-            foreach (var xmlFile in xmlFiles)
-            {
-                options.IncludeXmlComments(xmlFile);
-            }
-
-            options.AddOperationFilterInstance(new ApiVersionHeaderFilter());
-            options.AddDocumentFilterInstance(new DefaultApiFilter());
+            options.AddDocumentTransformer<DefaultApiTransformer>();
+            options.AddOperationTransformer<ApiVersionHeaderTransformer>();
         });
 
         return builder;
@@ -70,14 +62,7 @@ public static class Extensions
             return app;
         }
 
-        app.UseSwagger(options =>
-        {
-            options.RouteTemplate = "/openapi/{documentName}.json";
-            options.PreSerializeFilters.Add((oad, req) =>
-            {
-                oad.Servers = [new OpenApiServer { Url = $"{req.Scheme}://{req.Host.Value}" }];
-            });
-        });
+        app.MapOpenApi();
         app.MapScalarApiReference();
 
         return app;

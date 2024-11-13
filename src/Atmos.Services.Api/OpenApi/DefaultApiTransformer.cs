@@ -1,13 +1,12 @@
-﻿using Microsoft.OpenApi.Any;
+﻿using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Atmos.Services.Api.Swagger;
+namespace Atmos.Services.Api.OpenApi;
 
-public class DefaultApiFilter : IDocumentFilter
+public class DefaultApiTransformer : IOpenApiDocumentTransformer
 {
-    /// <inheritdoc />
-    public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
+    public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
     {
         var resp = new OpenApiResponses
         {
@@ -40,7 +39,7 @@ public class DefaultApiFilter : IDocumentFilter
             Name = "Status"
         };
 
-        swaggerDoc.Paths.Add("/health", new OpenApiPathItem
+        document.Paths.Add("/health", new OpenApiPathItem
         {
             Operations =
             {
@@ -53,7 +52,7 @@ public class DefaultApiFilter : IDocumentFilter
             }
         });
 
-        swaggerDoc.Paths.Add("/alive", new OpenApiPathItem
+        document.Paths.Add("/alive", new OpenApiPathItem
         {
             Operations =
             {
@@ -65,5 +64,7 @@ public class DefaultApiFilter : IDocumentFilter
                 }
             }
         });
+
+        return Task.CompletedTask;
     }
 }

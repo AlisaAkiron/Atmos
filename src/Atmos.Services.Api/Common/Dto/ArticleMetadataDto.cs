@@ -1,30 +1,23 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace Atmos.Services.Api.Common.Dto;
 
 public record ArticleMetadataDto
 {
-    /// <summary>
-    ///     Article's slug, also as an unique identifier
-    /// </summary>
     [JsonPropertyName("slug")]
+    [Description("Article's slug, also as an unique identifier")]
     public string Slug { get; set; } = string.Empty;
 
-    /// <summary>
-    ///     Title
-    /// </summary>
     [JsonPropertyName("title")]
+    [Description("Title")]
     public string Title { get; set; } = string.Empty;
 
-    /// <summary>
-    ///     The first release time
-    /// </summary>
     [JsonPropertyName("first_release_time")]
+    [Description("The first release time")]
     public DateTimeOffset FirstReleaseTime { get; set; }
 
-    /// <summary>
-    ///     The last edit time
-    /// </summary>
     [JsonPropertyName("last_edit_time")]
+    [Description("The last edit time")]
     public DateTimeOffset LastEditTime { get; set; }
 }

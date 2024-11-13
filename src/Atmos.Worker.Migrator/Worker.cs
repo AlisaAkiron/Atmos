@@ -54,16 +54,32 @@ public class Worker : BackgroundService
 
     private static async Task EnsureDatabaseAsync(AtmosDbContext dbContext, CancellationToken cancellationToken)
     {
-        var dbCreator = dbContext.GetService<IRelationalDatabaseCreator>();
-
         var strategy = dbContext.Database.CreateExecutionStrategy();
-        await strategy.ExecuteAsync(async () =>
-        {
-            if (await dbCreator.ExistsAsync(cancellationToken) is false)
+
+        var result = await strategy.ExecuteAsync(true,
+            async (context, state, ct) =>
             {
-                await dbCreator.CreateAsync(cancellationToken);
-            }
-        });
+                var dbCreator = context.GetService<IRelationalDatabaseCreator>();
+
+                if (await dbCreator.ExistsAsync(ct) is false)
+                {
+                    await dbCreator.CreateAsync(ct);
+                }
+
+                return state;
+            },
+            async (context, _, ct) =>
+            {
+                var dbCreator = context.GetService<IRelationalDatabaseCreator>();
+                var exists = await dbCreator.ExistsAsync(ct);
+
+                return new ExecutionResult<bool>(exists, exists);
+            }, cancellationToken);
+
+        if (result is false)
+        {
+            throw new InvalidOperationException("Failed to ensure database is created.");
+        }
     }
 
     private static async Task RunMigrationAsync(AtmosDbContext dbContext, CancellationToken cancellationToken)
@@ -75,12 +91,19 @@ public class Worker : BackgroundService
         }
 
         var strategy = dbContext.Database.CreateExecutionStrategy();
-        await strategy.ExecuteAsync(async () =>
-        {
-            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-            await dbContext.Database.MigrateAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-        });
+
+        await strategy.ExecuteInTransactionAsync(
+            dbContext,
+            async (context, ct) =>
+            {
+                await context.Database.MigrateAsync(ct);
+            },
+            async (context, ct) =>
+            {
+                var migrations = await context.Database.GetPendingMigrationsAsync(ct);
+                return migrations.Any();
+            },
+            cancellationToken);
     }
 
     private static async Task SeedDevelopmentDataAsync(AtmosDbContext dbContext, CancellationToken cancellationToken)
