@@ -103,7 +103,9 @@ public static class Extensions
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation(http =>
                     {
-                        http.FilterHttpRequestMessage = r =>
+                        // Unknown error: Remove the redundant delegate type will cause Rider to mark it as an error
+                        // ReSharper disable once RedundantDelegateCreation
+                        http.FilterHttpRequestMessage = new Func<HttpRequestMessage, bool>(r =>
                         {
                             var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
                             if (otlpEndpoint is null)
@@ -111,7 +113,7 @@ public static class Extensions
                                 return true;
                             }
                             return !r.RequestUri?.AbsoluteUri.Contains(otlpEndpoint, StringComparison.Ordinal) ?? true;
-                        };
+                        });
                     });
             });
 

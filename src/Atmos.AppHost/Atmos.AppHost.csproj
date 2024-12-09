@@ -21,12 +21,4 @@
       <ProjectReference Include="..\Atmos.Worker.Migrator\Atmos.Worker.Migrator.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Model\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove="Model\ComponentVersion.cs" />
-    </ItemGroup>
-
 </Project>
