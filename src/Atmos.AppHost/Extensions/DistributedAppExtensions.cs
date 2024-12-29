@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
@@ -30,5 +31,32 @@ public static class DistributedAppExtensions
         });
 
         return builder;
+    }
+
+    public static IResourceBuilder<IResourceWithConnectionString> AddResourceWithConnectionString(
+        this IDistributedApplicationBuilder builder,
+        Func<IDistributedApplicationBuilder, IResourceBuilder<IResourceWithConnectionString>> resourceBuilder,
+        string connectionStringName)
+    {
+        var csValue = builder.Configuration.GetConnectionString(connectionStringName);
+        return string.IsNullOrEmpty(csValue)
+            ? resourceBuilder.Invoke(builder)
+            : builder.AddConnectionString(connectionStringName);
+    }
+
+    public static IResourceBuilder<IResourceWithConnectionString> AddConnectionStringWithDefault(
+        this IDistributedApplicationBuilder builder,
+        string connectionStringName,
+        string defaultValue)
+    {
+        var csValue = builder.Configuration.GetConnectionString(connectionStringName);
+        if (string.IsNullOrEmpty(csValue))
+        {
+            builder.Configuration.AddInMemoryCollection([
+                new KeyValuePair<string, string?>($"ConnectionStrings:{connectionStringName}", defaultValue)
+            ]);
+        }
+
+        return builder.AddConnectionString(connectionStringName);
     }
 }

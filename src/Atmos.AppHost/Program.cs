@@ -8,74 +8,72 @@ builder.AddAtmosAppHost();
 #region Parameters
 
 var postgresqlTag = builder.AddParameter("postgresql-tag", "17.0").GetString();
-var pgAdminTag = builder.AddParameter("pgadmin-tag", "latest").GetString();
 var redisTag = builder.AddParameter("redis-tag", "alpine").GetString();
-var redisCommanderTag = builder.AddParameter("redis-commander-tag", "latest").GetString();
-
-var withPgAdmin = builder.AddParameter("with-pgadmin", "false").GetBool();
-var withRedisCommander = builder.AddParameter("with-redis-commander", "false").GetBool();
 
 var postgresqlPassword = builder
     .AddParameter("postgresql-password", "1nyWacUqpb3NMd8BUECiZkP51VHNYaxL", false, true);
+
+var enablePgadmin = builder.AddParameter("enable-pgadmin", "false").GetBool();
+var enableRedisCommander = builder.AddParameter("enable-redis-commander", "false").GetBool();
 
 #endregion
 
 #region External Services
 
-// PostgreSQL
-var postgresqlInstance = builder
-    .AddPostgres("postgresql-instance", password: postgresqlPassword)
-    .WithOtlpExporter()
-    .WithImageTag(postgresqlTag)
-    .WithDataVolume("atmos-db-volume")
-    .WithLifetime(ContainerLifetime.Persistent);
-
-if (withPgAdmin)
-{
-    postgresqlInstance.WithPgAdmin(resourceBuilder =>
+var postgresql = builder
+    .AddResourceWithConnectionString(b =>
     {
-        resourceBuilder
-            .WithImageTag(pgAdminTag)
-            .WithLifetime(ContainerLifetime.Persistent);
-    });
-}
+        var pg = b
+            .AddPostgres("postgresql-instance", password: postgresqlPassword)
+            .WithLifetime(ContainerLifetime.Persistent)
+            .WithOtlpExporter()
+            .WithImageTag(postgresqlTag)
+            .WithDataVolume("atmos-db-volume");
+        if (enablePgadmin)
+        {
+            pg.WithPgAdmin(pgadmin => pgadmin
+                .WithImageTag("latest")
+                .WithLifetime(ContainerLifetime.Persistent));
+        }
 
-var postgresqlDatabase = postgresqlInstance
-    .AddDatabase("postgresql-database", databaseName: "dev-atmos");
-
-// Redis
+        pg.AddDatabase("postgresql-database", "dev-atmos");
+        return pg;
+    }, "PostgreSQL");
 var redis = builder
-    .AddRedis("redis")
-    .WithImageTag(redisTag)
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WithClearCommand()
-    .WithOtlpExporter();
-
-if (withRedisCommander)
-{
-    redis.WithRedisCommander(resourceBuilder =>
+    .AddResourceWithConnectionString(b =>
     {
-        resourceBuilder
-            .WithImageTag(redisCommanderTag)
-            .WithLifetime(ContainerLifetime.Persistent);
-    });
-}
+        var r = b
+            .AddRedis("redis")
+            .WithLifetime(ContainerLifetime.Persistent)
+            .WithClearCommand()
+            .WithOtlpExporter()
+            .WithImageTag(redisTag)
+            .WithDataVolume("atmos-redis");
+        if (enableRedisCommander)
+        {
+            r.WithRedisCommander(rc => rc
+                .WithImageTag("latest")
+                .WithLifetime(ContainerLifetime.Persistent));
+        }
+
+        return r;
+    }, "Redis");
 
 #endregion
 
 var migrator = builder.AddProject<Atmos_Worker_Migrator>("worker-migrator")
-    .WithReference(postgresqlDatabase)
-    .WaitFor(postgresqlDatabase);
+    .WithReference(postgresql, "PostgreSQL")
+    .WaitFor(postgresql);
 
-var apiContent = builder
-    .AddProject<Atmos_Api_Content>("api-content")
-    .WithReference(postgresqlDatabase)
-    .WithReference(redis)
+var api = builder
+    .AddProject<Atmos_Api_Content>("api")
+    .WithReference(postgresql, "PostgreSQL")
+    .WithReference(redis, "Redis")
     .WaitForCompletion(migrator);
 
 builder
     .AddProject<Atmos_Web>("web")
-    .WithReference(apiContent)
+    .WithReference(api)
     .WaitForCompletion(migrator);
 
 var app = builder.Build();
