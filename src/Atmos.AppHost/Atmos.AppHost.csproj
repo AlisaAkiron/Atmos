@@ -16,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Atmos.Api.Content\Atmos.Api.Content.csproj" />
+      <ProjectReference Include="..\Atmos.Api\Atmos.Api.csproj" />
       <ProjectReference Include="..\Atmos.Web\Atmos.Web.csproj" />
       <ProjectReference Include="..\Atmos.Worker.Migrator\Atmos.Worker.Migrator.csproj" />
     </ItemGroup>

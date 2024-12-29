@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Atmos.Api.Content.Endpoints.ArticleEndpoints;
+namespace Atmos.Api.Endpoints.ArticleEndpoints;
 
 public class ArticleEndpoints : IEndpointMapper
 {

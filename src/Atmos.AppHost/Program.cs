@@ -66,7 +66,7 @@ var migrator = builder.AddProject<Atmos_Worker_Migrator>("worker-migrator")
     .WaitFor(postgresql);
 
 var api = builder
-    .AddProject<Atmos_Api_Content>("api")
+    .AddProject<Atmos_Api>("api")
     .WithReference(postgresql, "PostgreSQL")
     .WithReference(redis, "Redis")
     .WaitForCompletion(migrator);

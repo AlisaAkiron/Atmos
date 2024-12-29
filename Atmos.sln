@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atmos.Services.Default", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atmos.AppHost", "src\Atmos.AppHost\Atmos.AppHost.csproj", "{D26A897A-3CFF-49F5-9C11-0D046C4DF736}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atmos.Api.Content", "src\Atmos.Api.Content\Atmos.Api.Content.csproj", "{B154742A-6B9B-4438-A7DB-0664093F887C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atmos.Api", "src\Atmos.Api\Atmos.Api.csproj", "{B154742A-6B9B-4438-A7DB-0664093F887C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aspire", "Aspire", "{AE7D4626-A561-42C8-8B61-770D16417AAF}"
 EndProject
