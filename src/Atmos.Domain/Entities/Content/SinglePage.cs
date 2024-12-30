@@ -4,6 +4,7 @@ using Atmos.Domain.Entities.Abstract;
 
 namespace Atmos.Domain.Entities.Content;
 
+[Table("single_page")]
 public record SinglePage : IHasComments
 {
     [Key]

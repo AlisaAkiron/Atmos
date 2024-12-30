@@ -4,6 +4,7 @@ using Atmos.Domain.Entities.Abstract;
 
 namespace Atmos.Domain.Entities.Content;
 
+[Table("note")]
 public record Note : IHasDeleteRetention, IHasComments
 {
     [Key]

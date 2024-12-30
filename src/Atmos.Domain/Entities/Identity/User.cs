@@ -4,6 +4,7 @@ using Atmos.Domain.Entities.Content;
 
 namespace Atmos.Domain.Entities.Identity;
 
+[Table("user")]
 public record User
 {
     [Key]
@@ -22,9 +23,9 @@ public record User
     [Column("subscription")]
     public Subscription Subscription { get; set; } = null!;
 
-    [Column("comments")]
-    public List<Comment> Comments { get; set; } = [];
-
     [Column("social_logins")]
     public List<SocialLogin> SocialLogins { get; set; } = [];
+
+    [Column("webauthn_devices")]
+    public List<WebAuthn> WebAuthnDevices { get; set; } = [];
 }

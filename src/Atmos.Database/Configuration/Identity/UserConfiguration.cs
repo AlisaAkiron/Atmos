@@ -17,6 +17,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasForeignKey(x => x.UserId)
             .HasPrincipalKey(x => x.UserId);
 
+        builder.HasMany(x => x.WebAuthnDevices)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.UserId)
+            .HasPrincipalKey(x => x.UserId);
+
         builder.HasOne(x => x.Subscription)
             .WithOne(x => x.User)
             .HasForeignKey<Subscription>(x => x.UserId)

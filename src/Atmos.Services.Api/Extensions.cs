@@ -1,9 +1,11 @@
 using System.Reflection;
 using Asp.Versioning;
+using Atmos.Database;
 using Atmos.Services.Api.Abstract;
 using Atmos.Services.Api.Components;
 using Atmos.Services.Api.Models;
 using Atmos.Services.Api.OpenApi;
+using Atmos.Services.Api.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
@@ -52,6 +54,10 @@ public static class Extensions
             options.AddOperationTransformer<ApiVersionHeaderTransformer>();
         });
 
+        builder.Services.AddDataLayerServices();
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+
         return builder;
     }
 
@@ -91,8 +97,8 @@ public static class Extensions
 
         app.UseCors();
 
-        // app.UseAuthentication();
-        // app.UseAuthorization();
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         var api = app.NewVersionedApi();
 

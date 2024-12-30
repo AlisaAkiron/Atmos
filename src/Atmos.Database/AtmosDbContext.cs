@@ -30,8 +30,10 @@ public class AtmosDbContext : DbContext
 
     #region Identity
 
+    public DbSet<SocialLogin> SocialLogins => Set<SocialLogin>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<WebAuthn> WebAuthn => Set<WebAuthn>();
 
     #endregion
 }

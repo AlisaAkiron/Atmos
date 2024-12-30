@@ -12,7 +12,6 @@ namespace Atmos.Api.Endpoints.ArticleEndpoints;
 
 public class ArticleEndpoints : IEndpointMapper
 {
-    /// <inheritdoc />
     public static void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var articleGroup = endpoints.MapGroup("/article")
