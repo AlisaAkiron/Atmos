@@ -13,9 +13,12 @@ public static class RedisExtensions
             name: "clear-cache",
             displayName: "Clear Cache",
             executeCommand: context => OnRunClearCacheCommandAsync(builder, context),
-            updateState: OnUpdateResourceState,
-            iconName: "AnimalRabbitOff",
-            iconVariant: IconVariant.Filled);
+            commandOptions: new CommandOptions
+            {
+                UpdateState = OnUpdateResourceState,
+                IconName = "AnimalRabbitOff",
+                IconVariant = IconVariant.Filled
+            });
 
         return builder;
     }
