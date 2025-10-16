@@ -1,4 +1,3 @@
-using Atmos.Domain.Entities.Content;
 using Atmos.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,16 +16,6 @@ public class AtmosDbContext : DbContext
 
         base.OnModelCreating(modelBuilder);
     }
-
-    #region Content
-
-    public DbSet<Article> Articles => Set<Article>();
-    public DbSet<Classification> Classifications => Set<Classification>();
-    public DbSet<Comment> Comments => Set<Comment>();
-    public DbSet<Note> Notes => Set<Note>();
-    public DbSet<SinglePage> SinglePages => Set<SinglePage>();
-
-    #endregion
 
     #region Identity
 

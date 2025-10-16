@@ -7,67 +7,42 @@ builder.AddAtmosAppHost();
 
 #region Parameters
 
-var postgresqlTag = builder.AddParameter("postgresql-tag", "17.0").GetString();
-var redisTag = builder.AddParameter("redis-tag", "alpine").GetString();
-
-var postgresqlPassword = builder
-    .AddParameter("postgresql-password", "1nyWacUqpb3NMd8BUECiZkP51VHNYaxL", false, true);
-
-var enablePgadmin = builder.AddParameter("enable-pgadmin", "false").GetBool();
-var enableRedisCommander = builder.AddParameter("enable-redis-commander", "false").GetBool();
+var postgresPassword = builder.AddParameter("postgres-password", "atmos", secret: true);
+var redisPassword = builder.AddParameter("redis-password", "atmos", secret: true);
 
 #endregion
 
 #region External Services
 
-var postgresql = builder
-    .AddResourceWithConnectionString(b =>
-    {
-        var pg = b
-            .AddPostgres("postgresql-instance", password: postgresqlPassword)
-            .WithLifetime(ContainerLifetime.Persistent)
-            .WithOtlpExporter()
-            .WithImageTag(postgresqlTag)
-            .WithDataVolume("atmos-db-volume");
-        if (enablePgadmin)
-        {
-            pg.WithPgAdmin(pgadmin => pgadmin
-                .WithImageTag("latest")
-                .WithLifetime(ContainerLifetime.Persistent));
-        }
+var postgres = builder
+    .AddPostgres("postgres", password: postgresPassword)
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithOtlpExporter()
+    .WithImageTag("18.0")
+    .WithImagePullPolicy(ImagePullPolicy.Missing)
+    .WithDataVolume("atmos-psql-data")
+    .WithHostPort(15432)
+    .AddDatabase("psql-db", "atmos");
 
-        pg.AddDatabase("postgresql-database", "dev-atmos");
-        return pg;
-    }, "PostgreSQL");
 var redis = builder
-    .AddResourceWithConnectionString(b =>
-    {
-        var r = b
-            .AddRedis("redis")
-            .WithLifetime(ContainerLifetime.Persistent)
-            .WithClearCommand()
-            .WithOtlpExporter()
-            .WithImageTag(redisTag)
-            .WithDataVolume("atmos-redis");
-        if (enableRedisCommander)
-        {
-            r.WithRedisCommander(rc => rc
-                .WithImageTag("latest")
-                .WithLifetime(ContainerLifetime.Persistent));
-        }
-
-        return r;
-    }, "Redis");
+    .AddRedis("redis", password: redisPassword)
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithOtlpExporter()
+    .WithImageTag("8.2.1-alpine")
+    .WithImagePullPolicy(ImagePullPolicy.Missing)
+    .WithDataVolume("atmos-redis-data")
+    .WithHostPort(16379)
+    .WithPersistence(TimeSpan.FromMinutes(5), 100);
 
 #endregion
 
 var migrator = builder.AddProject<Atmos_Worker_Migrator>("worker-migrator")
-    .WithReference(postgresql, "PostgreSQL")
-    .WaitFor(postgresql);
+    .WithReference(postgres, "PostgreSQL")
+    .WaitFor(postgres);
 
 var api = builder
     .AddProject<Atmos_Api>("api")
-    .WithReference(postgresql, "PostgreSQL")
+    .WithReference(postgres, "PostgreSQL")
     .WithReference(redis, "Redis")
     .WaitForCompletion(migrator);
 

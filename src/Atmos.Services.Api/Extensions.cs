@@ -1,6 +1,7 @@
 using System.Reflection;
 using Asp.Versioning;
 using Atmos.Database;
+using Atmos.Domain;
 using Atmos.Services.Api.Abstract;
 using Atmos.Services.Api.Components;
 using Atmos.Services.Api.Models;
@@ -54,6 +55,7 @@ public static class Extensions
             options.AddOperationTransformer<ApiVersionHeaderTransformer>();
         });
 
+        builder.Services.AddDomainLayerService();
         builder.Services.AddDataLayerServices();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<ICurrentUser, CurrentUser>();

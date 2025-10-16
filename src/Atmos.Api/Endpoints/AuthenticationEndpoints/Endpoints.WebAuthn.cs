@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using System.Text;
 using Atmos.Api.Endpoints.AuthenticationEndpoints.Dto;
+using Atmos.Common.Abstract;
 using Atmos.Common.Utils;
 using Atmos.Database;
 using Atmos.Domain.Abstract;
@@ -22,7 +23,8 @@ public partial class Endpoints
     private static async Task<Ok<WebAuthnAttestationDto>> AttestationAsync(
         [FromServices] IFido2 fido2,
         [FromServices] ICurrentUser currentUser,
-        [FromServices] IDistributedCache distributedCache)
+        [FromServices] IDistributedCache distributedCache,
+        [FromServices] IGuidProvider guidProvider)
     {
         Guid? userId = null;
         var creatingUser = false;
@@ -34,7 +36,7 @@ public partial class Endpoints
         {
             var userDisplayName = RandomUtils.GetRandomAlphabetString(6);
 
-            userId = Guid.NewGuid();
+            userId = guidProvider.Create();
             creatingUser = true;
 
             fido2User.Name = userId.ToString();
@@ -49,7 +51,7 @@ public partial class Endpoints
                 userId = user.UserId;
                 creatingUser = false;
                 existingCredentials = user.WebAuthnDevices
-                    .Select(x => new PublicKeyCredentialDescriptor(x.DescriptorId))
+                    .Select(x => new PublicKeyCredentialDescriptor(x.CredentialId))
                     .ToList();
 
                 fido2User.Name = user.UserId.ToString();
@@ -71,7 +73,7 @@ public partial class Endpoints
             }
         });
 
-        var attestationId = Guid.NewGuid();
+        var attestationId = guidProvider.Create();
         var cacheKey = GetAttestationChallengeCacheKey(attestationId);
         await distributedCache.SetStringAsync(cacheKey, options.ToJson());
 
@@ -115,7 +117,7 @@ public partial class Endpoints
             OriginalOptions = credentialCreateOptions,
             IsCredentialIdUniqueToUserCallback = async (p, token) =>
             {
-                var exist = await dbContext.WebAuthn.AnyAsync(x => x.DescriptorId == p.CredentialId, token);
+                var exist = await dbContext.WebAuthn.AnyAsync(x => x.CredentialId == p.CredentialId, token);
                 return exist;
             }
         });
@@ -139,7 +141,8 @@ public partial class Endpoints
     [EndpointSummary("WebAuthn assertion")]
     private static async Task<Ok<WebAuthnAssertionDto>> AssertionAsync(
         [FromServices] IFido2 fido2,
-        [FromServices] IDistributedCache distributedCache)
+        [FromServices] IDistributedCache distributedCache,
+        [FromServices] IGuidProvider guidProvider)
     {
         var options = fido2.GetAssertionOptions(new GetAssertionOptionsParams
         {
@@ -147,7 +150,7 @@ public partial class Endpoints
             UserVerification = UserVerificationRequirement.Required
         });
 
-        var challengeId = Guid.NewGuid();
+        var challengeId = guidProvider.Create();
         var cacheKey = GetAssertionChallengeCacheKey(challengeId);
 
         await distributedCache.SetStringAsync(cacheKey, options.ToJson());
@@ -182,13 +185,13 @@ public partial class Endpoints
         var assertionOptions = AssertionOptions.FromJson(options);
 
         // Find stored credential
-        var user = await userManager.GetUserByWebAuthnAsync(dto.AssertionResponse.Id);
+        var user = await userManager.GetUserByWebAuthnAsync(dto.AssertionResponse.RawId);
         if (user is null)
         {
             return TypedResults.BadRequest("Invalid credential ID");
         }
         var storedCredential = user.WebAuthnDevices
-            .First(x => x.DescriptorId.SequenceEqual(dto.AssertionResponse.Id));
+            .First(x => x.CredentialId.SequenceEqual(dto.AssertionResponse.RawId));
 
         // Verify the assertion
         var verifyAssertionResult = await fido2.MakeAssertionAsync(new MakeAssertionParams
@@ -198,7 +201,7 @@ public partial class Endpoints
             StoredPublicKey = storedCredential.PublicKey,
             StoredSignatureCounter = 0,
             IsUserHandleOwnerOfCredentialIdCallback =  (p, _) =>
-                Task.FromResult(p.CredentialId.SequenceEqual(storedCredential.DescriptorId) &&
+                Task.FromResult(p.CredentialId.SequenceEqual(storedCredential.CredentialId) &&
                                 p.UserHandle.SequenceEqual(storedCredential.UserHandle))
         });
 

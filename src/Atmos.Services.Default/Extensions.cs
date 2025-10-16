@@ -27,6 +27,8 @@ public static class Extensions
         builder.AddRedisOutputCache("Redis");
         builder.AddRedisDistributedCache("Redis");
 
+        builder.Services.AddSingleton(TimeProvider.System);
+
         return builder;
     }
 

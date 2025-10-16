@@ -7,8 +7,8 @@ namespace Atmos.Domain.Entities.Identity;
 public record WebAuthn
 {
     [Key]
-    [Column("descriptor_id")]
-    public byte[] DescriptorId { get; set; } = [];
+    [Column("credential_id")]
+    public byte[] CredentialId { get; set; } = [];
 
     [Column("public_key")]
     public byte[] PublicKey { get; set; } = [];

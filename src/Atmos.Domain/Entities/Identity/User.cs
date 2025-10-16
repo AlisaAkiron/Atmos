@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Atmos.Domain.Entities.Content;
 
 namespace Atmos.Domain.Entities.Identity;
 

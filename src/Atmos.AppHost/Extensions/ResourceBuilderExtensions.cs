@@ -2,15 +2,20 @@
 
 public static class ResourceBuilderExtensions
 {
-    public static string GetString(this IResourceBuilder<ParameterResource> parameterResourceBuilder)
+    public static async Task<string> GetStringAsync(this IResourceBuilder<ParameterResource> parameterResourceBuilder)
     {
-        var value = parameterResourceBuilder.Resource.Value;
-        return value;
+        var value = await parameterResourceBuilder.Resource.GetValueAsync(CancellationToken.None);
+        return value ?? string.Empty;
     }
 
-    public static bool GetBool(this IResourceBuilder<ParameterResource> parameterResourceBuilder)
+    public static async Task<bool> GetBoolAsync(this IResourceBuilder<ParameterResource> parameterResourceBuilder)
     {
-        var value = parameterResourceBuilder.Resource.Value;
+        var value = await parameterResourceBuilder.Resource.GetValueAsync(CancellationToken.None);
+        if (string.IsNullOrEmpty(value))
+        {
+            return false;
+        }
+
         return bool.Parse(value);
     }
 }
