@@ -2,7 +2,7 @@
 
     <!-- Project -->
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -28,9 +28,9 @@
     <PropertyGroup>
         <Authors>Alisa</Authors>
         <Company>Alisa Lab</Company>
-        <Copyright>Copyright © 2023-2024 Alisa and Contributors.</Copyright>
+        <Copyright>Copyright © 2023-2026 Alisa and Contributors.</Copyright>
         <RepositoryType>git</RepositoryType>
-        <RepositoryUrl>https://github.com/LiamSho/Atmos.git</RepositoryUrl>
+        <RepositoryUrl>https://github.com/AlisaAkiron/Atmos.git</RepositoryUrl>
         <NeutralLanguage>en-US</NeutralLanguage>
     </PropertyGroup>
 

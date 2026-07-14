@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.OpenApi;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 namespace Atmos.Services.Api.OpenApi;
 
@@ -13,39 +12,45 @@ public class DefaultApiTransformer : IOpenApiDocumentTransformer
             ["200"] = new OpenApiResponse
             {
                 Description = "System healthy",
-                Content =
+                Content =  new Dictionary<string, IOpenApiMediaType>
                 {
-                    ["text/plain"] = new OpenApiMediaType
+                    ["text/plain"] = new OpenApiMediaType()
                     {
-                        Example = new OpenApiString("Health")
+                        Example = "Health"
                     }
                 }
             },
             ["503"] = new OpenApiResponse
             {
                 Description = "System unhealthy",
-                Content =
+                Content = new Dictionary<string, IOpenApiMediaType>
                 {
-                    ["text/plain"] = new OpenApiMediaType
+                    ["text/plain"] = new OpenApiMediaType()
                     {
-                        Example = new OpenApiString("Unhealthy")
+                        Example = "Unhealthy"
                     }
                 }
             }
         };
 
-        var tag = new OpenApiTag
+        document.Tags ??= new HashSet<OpenApiTag>();
+        document.Tags.Add(new OpenApiTag
         {
             Name = "Status"
+        });
+
+        var tagRef = new HashSet<OpenApiTagReference>
+        {
+            new("Status")
         };
 
         document.Paths.Add("/health", new OpenApiPathItem
         {
-            Operations =
+            Operations = new Dictionary<HttpMethod, OpenApiOperation>
             {
-                [OperationType.Get] = new OpenApiOperation
+                [HttpMethod.Get] = new()
                 {
-                    Tags = [tag],
+                    Tags = tagRef,
                     Description = "Get to know if the system can serve requests.",
                     Responses = resp
                 }
@@ -54,11 +59,11 @@ public class DefaultApiTransformer : IOpenApiDocumentTransformer
 
         document.Paths.Add("/alive", new OpenApiPathItem
         {
-            Operations =
+            Operations = new Dictionary<HttpMethod, OpenApiOperation>
             {
-                [OperationType.Get] = new OpenApiOperation
+                [HttpMethod.Get] = new()
                 {
-                    Tags = [tag],
+                    Tags = tagRef,
                     Description = "Get to know if the system is running.",
                     Responses = resp
                 }

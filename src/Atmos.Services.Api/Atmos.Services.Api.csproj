@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Atmos.Database\Atmos.Database.csproj" />
+    <ProjectReference Include="..\Atmos.Templates\Atmos.Templates.csproj" />
     <ProjectReference Include="..\Atmos.Services.Default\Atmos.Services.Default.csproj" />
   </ItemGroup>
 
@@ -20,7 +21,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <!-- Force Microsoft.AspNetCore.OpenApi to use patched version -->
+    <PackageReference Include="Microsoft.OpenApi" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="Riok.Mapperly" />
     <PackageReference Include="Scalar.AspNetCore" />

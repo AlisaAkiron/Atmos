@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Sign in to your account</value>
+  </data>
+  <data name="Subtitle" xml:space="preserve">
+    <value>We received a login request for your account. Use the code below or click the button to sign in.</value>
+  </data>
+  <data name="VerificationCode" xml:space="preserve">
+    <value>Verification code</value>
+  </data>
+  <data name="Or" xml:space="preserve">
+    <value>or</value>
+  </data>
+  <data name="SignInButton" xml:space="preserve">
+    <value>Sign in with Magic Link</value>
+  </data>
+  <data name="FallbackHint" xml:space="preserve">
+    <value>If the button doesn't work, copy and paste this link into your browser:</value>
+  </data>
+  <data name="FooterNote" xml:space="preserve">
+    <value>This link expires in {0} minutes. If you didn't request this, you can safely ignore this email.</value>
+  </data>
+</root>

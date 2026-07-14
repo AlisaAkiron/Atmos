@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Alisa Lab</title>
+    <style>@_scopedCss</style>
+</head>
+
+<body>
+<div class="email-wrapper">
+    <div class="email-card">
+        <img src="@_logoUrl" alt="Logo" class="logo">
+        @ChildContent
+    </div>
+</div>
+</body>
+
+</html>
+
+@code {
+    [Parameter] public required RenderFragment ChildContent { get; set; }
+
+    private string _logoUrl = "";
+    private MarkupString _scopedCss;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var assembly = typeof(EmailLayout).Assembly;
+
+        await using var cssStream = assembly.GetManifestResourceStream("Atmos.Templates.styles.css");
+        if (cssStream is not null)
+        {
+            using var reader = new StreamReader(cssStream);
+            _scopedCss = new MarkupString(await reader.ReadToEndAsync());
+        }
+
+        await using var logoStream = assembly.GetManifestResourceStream("Atmos.Templates.Resources.Images.logo.svg");
+        if (logoStream is null)
+        {
+            throw new FileNotFoundException("Logo resources not found");
+        }
+
+        using var ms = new MemoryStream();
+        await logoStream.CopyToAsync(ms);
+        var logoBase64 = Convert.ToBase64String(ms.ToArray());
+        _logoUrl = $"data:image/svg+xml;base64,{logoBase64}";
+    }
+}

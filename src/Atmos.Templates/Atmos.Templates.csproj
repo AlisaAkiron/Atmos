@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <ItemGroup>
+      <ProjectReference Include="..\Atmos.Common\Atmos.Common.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+      <PackageReference Include="Microsoft.Extensions.Localization" />
+    </ItemGroup>
+
+  
+    <ItemGroup>
+      <Compile Update="Components\Emails\MagicLinkViewModel.cs">
+        <DependentUpon>MagicLink.razor</DependentUpon>
+      </Compile>
+      <Compile Update="Resources\Components\MagicLinkResources.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>MagicLinkResources.resx</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Update="Resources\Components\MagicLinkResources.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>MagicLink.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Resources\Components\MagicLinkResources.zh.resx">
+        <DependentUpon>MagicLinkResources.resx</DependentUpon>
+      </EmbeddedResource>
+    </ItemGroup>
+  
+    <ItemGroup>
+      <EmbeddedResource Include="Resources\Images\logo.svg" />
+    </ItemGroup>
+
+    <Target Name="EmbedScopedCss" BeforeTargets="AssignTargetPaths" DependsOnTargets="BundleScopedCssFiles">
+      <ItemGroup>
+        <EmbeddedResource Include="$(IntermediateOutputPath)scopedcss/bundle/Atmos.Templates.styles.css" LogicalName="Atmos.Templates.styles.css" />
+      </ItemGroup>
+    </Target>
+
+</Project>

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.1" />
+    <Sdk Name="Aspire.AppHost.Sdk" Version="13.0.2" />
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -11,6 +11,7 @@
       <PackageReference Include="Aspire.Hosting.AppHost" />
       <PackageReference Include="Aspire.Hosting.PostgreSQL" />
       <PackageReference Include="Aspire.Hosting.Redis" />
+      <PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" />
       <PackageReference Include="Serilog.Extensions.Hosting" />
       <PackageReference Include="Serilog.Sinks.Console" />
     </ItemGroup>

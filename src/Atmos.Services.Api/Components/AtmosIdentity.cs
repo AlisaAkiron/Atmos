@@ -1,10 +1,12 @@
-﻿using Atmos.Common.Extensions;
+﻿using System.Security.Claims;
+using Atmos.Common.Extensions;
 using Atmos.Services.Api.Enums;
 using Atmos.Services.Api.Options.Authentication;
 using Fido2NetLib;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Atmos.Services.Api.Components;
 
@@ -41,28 +43,45 @@ public static class AtmosIdentity
                 o.ClientId = oidc.ClientId;
                 o.ClientSecret = oidc.ClientSecret;
 
+                o.SaveTokens = true;
+                o.GetClaimsFromUserInfoEndpoint = true;
+                o.TokenValidationParameters = new TokenValidationParameters
+                {
+                    LogValidationExceptions =  true,
+                };
+
+                o.MetadataAddress = oidc.MetadataAddress;
+
                 o.CallbackPath = $"/auth/callback/{oidc.Name}";
 
-                if (string.IsNullOrEmpty(oidc.MetadataAddress) is false)
+                // Custom claim mappings
+                var claimMappings = oidc.ClaimMappings;
+                if (!string.IsNullOrEmpty(claimMappings.Sub))
                 {
-                    o.MetadataAddress = oidc.MetadataAddress;
                 }
-                else
-                {
-                    if (string.IsNullOrEmpty(oidc.AuthorizationEndpoint) ||
-                        string.IsNullOrEmpty(oidc.TokenEndpoint) ||
-                        string.IsNullOrEmpty(oidc.UserInfoEndpoint))
-                    {
-                        throw new InvalidOperationException("MetadataAddress or required endpoints are not provided.");
-                    }
 
-                    o.Configuration = new OpenIdConnectConfiguration
-                    {
-                        AuthorizationEndpoint = oidc.AuthorizationEndpoint,
-                        TokenEndpoint = oidc.TokenEndpoint,
-                        UserInfoEndpoint = oidc.UserInfoEndpoint
-                    };
+                if (!string.IsNullOrEmpty(claimMappings.Name))
+                {
                 }
+
+                if (!string.IsNullOrEmpty(claimMappings.Email))
+                {
+                }
+
+                o.Events = new OpenIdConnectEvents
+                {
+                    OnTicketReceived = context =>
+                    {
+                        if (context.Principal?.Identity is not ClaimsIdentity identity)
+                            return Task.CompletedTask;
+
+                        RemapClaim(identity, claimMappings.Sub, ClaimTypes.NameIdentifier);
+                        RemapClaim(identity, claimMappings.Name, ClaimTypes.Name);
+                        RemapClaim(identity, claimMappings.Email, ClaimTypes.Email);
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
         }
 
@@ -125,5 +144,20 @@ public static class AtmosIdentity
         }
 
         return builder;
+    }
+
+    private static void RemapClaim(ClaimsIdentity identity, string? sourceClaimType, string targetClaimType)
+    {
+        if (string.IsNullOrEmpty(sourceClaimType)) return;
+
+        var sourceClaim = identity.FindFirst(sourceClaimType);
+        if (sourceClaim is null) return;
+
+        var existing = identity.FindFirst(targetClaimType);
+        if (existing is not null)
+            identity.RemoveClaim(existing);
+
+        identity.AddClaim(new Claim(targetClaimType, sourceClaim.Value, sourceClaim.ValueType,
+            sourceClaim.Issuer, sourceClaim.OriginalIssuer));
     }
 }

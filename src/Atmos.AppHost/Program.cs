@@ -18,9 +18,9 @@ var postgres = builder
     .AddPostgres("postgres", password: postgresPassword)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithOtlpExporter()
-    .WithImageTag("18.0")
+    .WithImageTag("18.3")
     .WithImagePullPolicy(ImagePullPolicy.Missing)
-    .WithDataVolume("atmos-psql-data")
+    .WithVolume("atmos-psql-data", "/var/lib/postgresql")
     .WithHostPort(15432)
     .AddDatabase("psql-db", "atmos");
 
@@ -28,11 +28,19 @@ var redis = builder
     .AddRedis("redis", password: redisPassword)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithOtlpExporter()
-    .WithImageTag("8.2.1-alpine")
+    .WithImageTag("8.4.0-alpine")
     .WithImagePullPolicy(ImagePullPolicy.Missing)
     .WithDataVolume("atmos-redis-data")
     .WithHostPort(16379)
     .WithPersistence(TimeSpan.FromMinutes(5), 100);
+
+var mailpit = builder
+    .AddMailPit("mailpit")
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithOtlpExporter()
+    .WithImageTag("v1.28.0")
+    .WithImagePullPolicy(ImagePullPolicy.Missing)
+    .WithDataVolume("atmos-mailpit-data");
 
 #endregion
 
@@ -44,6 +52,7 @@ var api = builder
     .AddProject<Atmos_Api>("api")
     .WithReference(postgres, "PostgreSQL")
     .WithReference(redis, "Redis")
+    .WithReference(mailpit, "Smtp")
     .WaitForCompletion(migrator);
 
 builder

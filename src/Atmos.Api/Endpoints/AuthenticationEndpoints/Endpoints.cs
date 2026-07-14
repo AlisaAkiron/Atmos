@@ -27,6 +27,11 @@ public partial class Endpoints : IEndpointMapper
         webAuthnGroup.MapPost("/attestation/{attestationId:guid}", AttestationVerifyAsync);
         webAuthnGroup.MapPost("/assertion", AssertionAsync);
         webAuthnGroup.MapPost("/assertion/{challengeId:guid}", AssertionVerifyAsync);
+
+        // Magic Link
+        var magicLinkGroup = authGroup.MapGroup("/magic-link");
+
+        magicLinkGroup.MapPost("/send", SendLinkAsync);
     }
 
     [EndpointSummary("Get authentication providers")]

@@ -1,0 +1,31 @@
+<Solution>
+  <Folder Name="/Api/">
+    <Project Path="src/Atmos.Api/Atmos.Api.csproj" />
+    <Project Path="src/Atmos.Services.Api/Atmos.Services.Api.csproj" />
+  </Folder>
+  <Folder Name="/Aspire/">
+    <Project Path="src/Atmos.AppHost/Atmos.AppHost.csproj" />
+    <Project Path="src/Atmos.Services.Default/Atmos.Services.Default.csproj" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="src/Atmos.Common/Atmos.Common.csproj" />
+    <Project Path="src/Atmos.Database/Atmos.Database.csproj" />
+    <Project Path="src/Atmos.Domain/Atmos.Domain.csproj" />
+    <Project Path="src\Atmos.Templates\Atmos.Templates.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Web/">
+    <Project Path="src/Atmos.Web/Atmos.Web.csproj" />
+  </Folder>
+  <Folder Name="/Worker/">
+    <Project Path="src/Atmos.Worker.Migrator/Atmos.Worker.Migrator.csproj" />
+  </Folder>
+</Solution>

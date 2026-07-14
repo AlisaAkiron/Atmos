@@ -10,11 +10,18 @@ public record OpenIdConnectOptions
     public string ClientId { get; set; } = string.Empty;
     public string ClientSecret { get; set; } = string.Empty;
 
-    public string? MetadataAddress { get; set; }
+    public string MetadataAddress { get; set; } = string.Empty;
 
-    public string? AuthorizationEndpoint { get; set; }
-    public string? TokenEndpoint { get; set; }
-    public string? UserInfoEndpoint { get; set; }
+    public List<string> Scopes { get; set; } = [];
 
-    public List<string> Scopes { get; set; } = ["openid", "profile", "email"];
+    public ClaimMappingOptions ClaimMappings { get; set; } = new();
+}
+
+public record ClaimMappingOptions
+{
+    public string? Sub { get; set; }
+
+    public string? Name { get; set; }
+
+    public string? Email { get; set; }
 }
