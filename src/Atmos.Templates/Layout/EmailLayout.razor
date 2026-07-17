@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
-    <title>Alisa Lab</title>
+    <title>@(Title ?? "Alisa Lab")</title>
     <style>@_scopedCss</style>
 </head>
 
@@ -22,6 +22,8 @@
 
 @code {
     [Parameter] public required RenderFragment ChildContent { get; set; }
+
+    [Parameter] public string? Title { get; set; }
 
     private string _logoUrl = "";
     private MarkupString _scopedCss;

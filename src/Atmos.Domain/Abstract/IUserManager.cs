@@ -1,4 +1,4 @@
-﻿using Atmos.Domain.Entities.Identity;
+using Atmos.Domain.Entities.Identity;
 
 namespace Atmos.Domain.Abstract;
 
@@ -18,13 +18,13 @@ public interface IUserManager
 
     public Task<User> AddSocialLoginAsync(User user, string platform, string identifier, bool noSave = false);
 
-    public Task<User> AddWebAuthnAsync(User user, byte[] credentialId, byte[] publicKey, byte[] userHandle, string credType, Guid aaGuid, uint signCount, bool noSave = false);
+    public Task<User> AddWebAuthnAsync(User user, byte[] credentialId, byte[] publicKey, byte[] userHandle, string credType, Guid aaGuid, long signCount, bool noSave = false);
 
     public Task<User> AddEmailAsync(Guid userId, string email, bool noSave = false);
 
     public Task<User> AddSocialLoginAsync(Guid userId, string platform, string identifier, bool noSave = false);
 
-    public Task<User> AddWebAuthnAsync(Guid userId, byte[] credentialId, byte[] publicKey, byte[] userHandle, string credType, Guid aaGuid, uint signCount, bool noSave = false);
+    public Task<User> AddWebAuthnAsync(Guid userId, byte[] credentialId, byte[] publicKey, byte[] userHandle, string credType, Guid aaGuid, long signCount, bool noSave = false);
 
-    public Task UpdateWebAuthnCounterAsync(User user, byte[] credentialId, uint signCount, bool noSave = false);
+    public Task UpdateWebAuthnCounterAsync(User user, byte[] credentialId, long signCount, bool noSave = false);
 }

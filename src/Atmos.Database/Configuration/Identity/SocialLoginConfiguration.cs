@@ -13,6 +13,6 @@ public class SocialLoginConfiguration : IEntityTypeConfiguration<SocialLogin>
         {
             x.Platform,
             x.Identifier
-        });
+        }).IsUnique();
     }
 }

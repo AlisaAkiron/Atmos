@@ -22,6 +22,11 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <!-- NuGet audit: a vulnerable (transitive) package version should surface as a warning,
+             not fail the build. Needed because Microsoft.OpenApi must stay on 2.x for the
+             Microsoft.AspNetCore.OpenApi source generator, so a future 2.x advisory cannot
+             always be fixed by upgrading. -->
+        <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1903</WarningsNotAsErrors>
     </PropertyGroup>
 
     <!-- Assembly Meta -->

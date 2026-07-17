@@ -3,5 +3,7 @@
 public enum IdentityProviderType
 {
     OAuth,
-    WebAuthn
+    OpenIdConnect,
+    WebAuthn,
+    MagicLink
 }

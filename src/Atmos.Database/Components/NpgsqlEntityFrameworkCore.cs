@@ -1,11 +1,10 @@
-﻿using Atmos.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Npgsql;
 
-namespace Atmos.Services.Api.Components;
+namespace Atmos.Database;
 
 public static class NpgsqlEntityFrameworkCore
 {

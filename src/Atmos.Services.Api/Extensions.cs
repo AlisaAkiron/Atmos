@@ -1,16 +1,19 @@
-using System.Reflection;
+using System.Threading.RateLimiting;
 using Asp.Versioning;
 using Atmos.Database;
 using Atmos.Domain;
-using Atmos.Templates;
 using Atmos.Services.Api.Abstract;
 using Atmos.Services.Api.Components;
 using Atmos.Services.Api.Models;
 using Atmos.Services.Api.OpenApi;
+using Atmos.Services.Api.Options;
 using Atmos.Services.Api.Services;
+using Atmos.Templates;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -39,16 +42,8 @@ public static class Extensions
             options.UnsupportedApiVersionStatusCode = StatusCodes.Status400BadRequest;
         });
 
-        builder.Services.AddCors(options =>
-        {
-            options.AddDefaultPolicy(policy =>
-            {
-                policy
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowAnyOrigin();
-            });
-        });
+        builder.AddAtmosCors();
+        builder.AddAtmosRateLimiting();
 
         builder.Services.AddOpenApi(svcName, options =>
         {
@@ -57,25 +52,40 @@ public static class Extensions
             options.AddOperationTransformer<ApiVersionHeaderTransformer>();
         });
 
+        builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+
         builder.Services.AddDomainLayerService();
         builder.Services.AddDataLayerServices();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+        builder.Services.AddScoped<IUserAccountService, UserAccountService>();
+        builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
         builder.Services.AddEmailRenderer();
 
         return builder;
     }
 
-    public static WebApplication MapAtmosApiEndpoints(this WebApplication app)
+    public static WebApplication MapAtmosApiEndpoints(this WebApplication app, Action<IEndpointRouteBuilder> configureEndpoints)
     {
+        var isProduction = app.Environment.IsProduction();
+
         app.UseExceptionHandler(builder =>
         {
             builder.Run(async ctx =>
             {
-                var exception = ctx.Features.Get<IExceptionHandlerFeature>()?.Error;
-                var exceptionName = exception?.GetType().Name ?? "Unknown";
-                var msg = exception?.Message ?? "Unknown exception issue";
-                var resp = new ErrorResponse($"{exceptionName}: {msg}");
+                var message = "An unexpected error occurred";
+
+                // Exception details routinely contain internals; only expose them outside production
+                if (isProduction is false)
+                {
+                    var exception = ctx.Features.Get<IExceptionHandlerFeature>()?.Error;
+                    if (exception is not null)
+                    {
+                        message = $"{exception.GetType().Name}: {exception.Message}";
+                    }
+                }
+
+                var resp = new ErrorResponse(message);
                 ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await ctx.Response.WriteAsJsonAsync(resp);
             });
@@ -88,13 +98,14 @@ public static class Extensions
         });
 
         app.UseCors();
+        app.UseRateLimiter();
 
         app.UseAuthentication();
         app.UseAuthorization();
 
         var api = app.NewVersionedApi();
 
-        if (!app.Environment.IsProduction())
+        if (isProduction is false)
         {
             app.MapOpenApi();
             app.MapScalarApiReference();
@@ -105,19 +116,69 @@ public static class Extensions
                 .ExcludeFromDescription();
         }
 
-        var mappers = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(x => x.GetTypes())
-            .Where(x => x.GetInterface(nameof(IEndpointMapper)) is not null)
-            .Select(x => x.GetMethod(nameof(IEndpointMapper.MapEndpoints), BindingFlags.Public | BindingFlags.Static));
-
         var apiGroup = api.MapGroup("/api");
 
-        foreach (var mapper in mappers)
-        {
-            mapper?.Invoke(null, [apiGroup]);
-        }
+        configureEndpoints(apiGroup);
 
         return app;
+    }
+
+    public static IEndpointRouteBuilder MapEndpoints<TMapper>(this IEndpointRouteBuilder endpoints)
+        where TMapper : IEndpointMapper
+    {
+        TMapper.MapEndpoints(endpoints);
+        return endpoints;
+    }
+
+    private static IHostApplicationBuilder AddAtmosCors(this IHostApplicationBuilder builder)
+    {
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        var isProduction = builder.Environment.IsProduction();
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                if (allowedOrigins.Length > 0)
+                {
+                    policy
+                        .WithOrigins(allowedOrigins)
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                }
+                else if (isProduction is false)
+                {
+                    // Development convenience only; production requires explicit origins
+                    policy
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowAnyOrigin();
+                }
+            });
+        });
+
+        return builder;
+    }
+
+    private static IHostApplicationBuilder AddAtmosRateLimiting(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddRateLimiter(limiter =>
+        {
+            limiter.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            limiter.AddPolicy(AtmosAuthenticationDefaults.RateLimitPolicy, httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 10,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0
+                    }));
+        });
+
+        return builder;
     }
 
     private static string GetOtelServiceName(this IConfiguration configuration)

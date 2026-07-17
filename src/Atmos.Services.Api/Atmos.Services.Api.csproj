@@ -15,15 +15,14 @@
     <PackageReference Include="AspNet.Security.OAuth.Discord" />
     <PackageReference Include="AspNet.Security.OAuth.GitHub" />
     <PackageReference Include="Fido2" />
+    <PackageReference Include="MailKit" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
     <!-- Force Microsoft.AspNetCore.OpenApi to use patched version -->
     <PackageReference Include="Microsoft.OpenApi" />
-    <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="Riok.Mapperly" />
     <PackageReference Include="Scalar.AspNetCore" />
   </ItemGroup>

@@ -9,7 +9,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Atmos.Services.Api\Atmos.Services.Api.csproj" />
+      <ProjectReference Include="..\Atmos.Database\Atmos.Database.csproj" />
       <ProjectReference Include="..\Atmos.Services.Default\Atmos.Services.Default.csproj" />
     </ItemGroup>
 </Project>

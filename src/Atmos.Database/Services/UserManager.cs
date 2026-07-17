@@ -1,4 +1,4 @@
-﻿using Atmos.Common.Abstract;
+using Atmos.Common.Abstract;
 using Atmos.Domain.Abstract;
 using Atmos.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -28,28 +28,23 @@ public class UserManager : IUserManager
 
     public async Task<User?> GetUserBySocialLoginAsync(string platform, string identifier, bool includeDetails = false)
     {
-        var q = GetUserQueryable(includeDetails);
-        if (includeDetails)
-        {
-            q.Include(x => x.SocialLogins);
-        }
-
-        return await q.FirstOrDefaultAsync(x => x.SocialLogins.Any(y => y.Platform == platform && y.Identifier == identifier));
+        return await GetUserQueryable(includeDetails)
+            .FirstOrDefaultAsync(x => x.SocialLogins.Any(y => y.Platform == platform && y.Identifier == identifier));
     }
 
     public async Task<User?> GetUserByWebAuthnAsync(byte[] credentialId, bool includeDetails = false)
     {
-        var q = GetUserQueryable(includeDetails);
-        if (includeDetails)
-        {
-            q.Include(x => x.WebAuthnDevices);
-        }
-
-        return await q.FirstOrDefaultAsync(x => x.WebAuthnDevices.Any(y => y.CredentialId == credentialId));
+        return await GetUserQueryable(includeDetails)
+            .FirstOrDefaultAsync(x => x.WebAuthnDevices.Any(y => y.CredentialId == credentialId));
     }
 
     public async Task<User> CreateUserAsync(Guid userId, string nickname, List<string> emails, bool noSave = false)
     {
+        foreach (var email in emails)
+        {
+            await EnsureEmailIsFreeAsync(email);
+        }
+
         var user = new User
         {
             UserId = userId,
@@ -84,7 +79,7 @@ public class UserManager : IUserManager
         return await AddSocialLoginAsync(user, platform, identifier, noSave);
     }
 
-    public async Task<User> AddWebAuthnAsync(Guid userId, byte[] credentialId, byte[] publicKey, byte[] userHandle, string credType, Guid aaGuid, uint signCount, bool noSave = false)
+    public async Task<User> AddWebAuthnAsync(Guid userId, byte[] credentialId, byte[] publicKey, byte[] userHandle, string credType, Guid aaGuid, long signCount, bool noSave = false)
     {
         var user = await _dbContext.Users
                        .Include(x => x.WebAuthnDevices)
@@ -96,8 +91,14 @@ public class UserManager : IUserManager
 
     public async Task<User> AddEmailAsync(User user, string email, bool noSave = false)
     {
+        if (user.EmailAddresses.Contains(email))
+        {
+            return user;
+        }
+
+        await EnsureEmailIsFreeAsync(email);
+
         user.EmailAddresses.Add(email);
-        _dbContext.Update(user);
 
         if (noSave is false)
         {
@@ -109,14 +110,18 @@ public class UserManager : IUserManager
 
     public async Task<User> AddSocialLoginAsync(User user, string platform, string identifier, bool noSave = false)
     {
-        user.SocialLogins.Add(new SocialLogin
+        // Child entities are added explicitly: DbContext.Update(user) would mark entities with
+        // a pre-set key as Modified, turning the intended INSERT into a failing UPDATE
+        var socialLogin = new SocialLogin
         {
             ConnectionId = _guidProvider.Create(),
             Platform = platform,
             Identifier = identifier,
-        });
+            UserId = user.UserId
+        };
 
-        _dbContext.Update(user);
+        user.SocialLogins.Add(socialLogin);
+        await _dbContext.SocialLogins.AddAsync(socialLogin);
 
         if (noSave is false)
         {
@@ -126,19 +131,21 @@ public class UserManager : IUserManager
         return user;
     }
 
-    public async Task<User> AddWebAuthnAsync(User user, byte[] credentialId, byte[] publicKey, byte[] userHandle, string credType, Guid aaGuid, uint signCount, bool noSave = false)
+    public async Task<User> AddWebAuthnAsync(User user, byte[] credentialId, byte[] publicKey, byte[] userHandle, string credType, Guid aaGuid, long signCount, bool noSave = false)
     {
-        user.WebAuthnDevices.Add(new WebAuthn
+        var device = new WebAuthn
         {
             CredentialId = credentialId,
             PublicKey = publicKey,
             UserHandle = userHandle,
             AaGuid = aaGuid,
             SignatureCounter = signCount,
-            CredType = credType
-        });
+            CredType = credType,
+            UserId = user.UserId
+        };
 
-        _dbContext.Update(user);
+        user.WebAuthnDevices.Add(device);
+        await _dbContext.WebAuthn.AddAsync(device);
 
         if (noSave is false)
         {
@@ -148,14 +155,25 @@ public class UserManager : IUserManager
         return user;
     }
 
-    public async Task UpdateWebAuthnCounterAsync(User user, byte[] credentialId, uint signCount, bool noSave = false)
+    public async Task UpdateWebAuthnCounterAsync(User user, byte[] credentialId, long signCount, bool noSave = false)
     {
-        user.WebAuthnDevices.First(x => x.CredentialId == credentialId).SignatureCounter = signCount;
-        _dbContext.Update(user);
+        var device = user.WebAuthnDevices.FirstOrDefault(x => x.CredentialId.SequenceEqual(credentialId))
+                     ?? throw new InvalidOperationException("WebAuthn credential not found on user");
+
+        device.SignatureCounter = signCount;
 
         if (noSave is false)
         {
             await _dbContext.SaveChangesAsync();
+        }
+    }
+
+    private async Task EnsureEmailIsFreeAsync(string email)
+    {
+        var existing = await GetUserByEmailAsync(email);
+        if (existing is not null)
+        {
+            throw new InvalidOperationException($"Email '{email}' is already associated with another user");
         }
     }
 
@@ -167,7 +185,8 @@ public class UserManager : IUserManager
         {
             queryable = queryable
                 .Include(x => x.SocialLogins)
-                .Include(x => x.WebAuthnDevices);
+                .Include(x => x.WebAuthnDevices)
+                .Include(x => x.Subscription);
         }
 
         return queryable;

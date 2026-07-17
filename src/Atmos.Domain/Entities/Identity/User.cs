@@ -1,10 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Atmos.Domain.Entities.Abstract;
 
 namespace Atmos.Domain.Entities.Identity;
 
 [Table("user")]
-public record User
+public record User : IHasTimeRecord
 {
     [Key]
     [Column("user_id")]
@@ -19,12 +20,15 @@ public record User
     [Column("is_site_owner")]
     public bool IsSiteOwner { get; set; }
 
-    [Column("subscription")]
-    public Subscription Subscription { get; set; } = null!;
+    [Column("create_at")]
+    public DateTimeOffset CreateAt { get; set; }
 
-    [Column("social_logins")]
+    [Column("update_at")]
+    public DateTimeOffset UpdateAt { get; set; }
+
+    public Subscription? Subscription { get; set; }
+
     public List<SocialLogin> SocialLogins { get; set; } = [];
 
-    [Column("webauthn_devices")]
     public List<WebAuthn> WebAuthnDevices { get; set; } = [];
 }

@@ -11,7 +11,7 @@
     <Project Path="src/Atmos.Common/Atmos.Common.csproj" />
     <Project Path="src/Atmos.Database/Atmos.Database.csproj" />
     <Project Path="src/Atmos.Domain/Atmos.Domain.csproj" />
-    <Project Path="src\Atmos.Templates\Atmos.Templates.csproj" />
+    <Project Path="src/Atmos.Templates/Atmos.Templates.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />

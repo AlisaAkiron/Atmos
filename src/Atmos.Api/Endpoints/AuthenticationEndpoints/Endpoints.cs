@@ -1,15 +1,16 @@
-﻿using Atmos.Api.Endpoints.AuthenticationEndpoints.Dto;
-using Atmos.Common.Extensions;
+using Atmos.Api.Endpoints.Dto;
+using Atmos.Services.Api;
 using Atmos.Services.Api.Abstract;
 using Atmos.Services.Api.Enums;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using AuthenticationOptions = Atmos.Services.Api.Options.Authentication.AuthenticationOptions;
 
-namespace Atmos.Api.Endpoints.AuthenticationEndpoints;
+namespace Atmos.Api.Endpoints;
 
-public partial class Endpoints : IEndpointMapper
+public partial class AuthenticationEndpoints : IEndpointMapper
 {
     public static void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
@@ -19,9 +20,11 @@ public partial class Endpoints : IEndpointMapper
 
         authGroup.MapGet("/providers", GetProviders);
         authGroup.MapGet("/login/{provider}", InitiateAuthentication);
+        authGroup.MapPost("/logout", Logout);
 
         // WebAuthn
-        var webAuthnGroup = authGroup.MapGroup("/webauthn");
+        var webAuthnGroup = authGroup.MapGroup("/webauthn")
+            .RequireRateLimiting(AtmosAuthenticationDefaults.RateLimitPolicy);
 
         webAuthnGroup.MapPost("/attestation", AttestationAsync);
         webAuthnGroup.MapPost("/attestation/{attestationId:guid}", AttestationVerifyAsync);
@@ -29,28 +32,42 @@ public partial class Endpoints : IEndpointMapper
         webAuthnGroup.MapPost("/assertion/{challengeId:guid}", AssertionVerifyAsync);
 
         // Magic Link
-        var magicLinkGroup = authGroup.MapGroup("/magic-link");
+        var magicLinkGroup = authGroup.MapGroup("/magic-link")
+            .RequireRateLimiting(AtmosAuthenticationDefaults.RateLimitPolicy);
 
         magicLinkGroup.MapPost("/send", SendLinkAsync);
+        magicLinkGroup.MapGet("/verify", VerifyLinkAsync);
+        magicLinkGroup.MapPost("/verify", VerifyTokenAsync);
     }
 
     [EndpointSummary("Get authentication providers")]
     private static Ok<List<AuthenticationProviderDto>> GetProviders(
-        [FromServices] IConfiguration configuration)
+        [FromServices] IOptions<AuthenticationOptions> authenticationOptions)
     {
-        var result = GetAuthenticationProviderList(configuration);
+        var result = GetAuthenticationProviderList(authenticationOptions.Value);
 
         return TypedResults.Ok(result);
     }
 
     [EndpointSummary("Initiate authentication")]
-    private static Results<ChallengeHttpResult, NotFound> InitiateAuthentication(
-        [FromServices] IConfiguration configuration,
+    private static Results<ChallengeHttpResult, NotFound, BadRequest<string>> InitiateAuthentication(
+        [FromServices] IOptions<AuthenticationOptions> authenticationOptions,
         [FromRoute(Name = "provider")] string provider,
-        [FromQuery(Name = "return_url")] string returnUrl)
+        [FromQuery(Name = "return_url")] string? returnUrl)
     {
-        var providers = GetAuthenticationProviderList(configuration);
-        if (providers.Any(x => x.Name == provider) is false)
+        returnUrl ??= "/";
+        if (IsLocalUrl(returnUrl) is false)
+        {
+            return TypedResults.BadRequest("return_url must be a local URL");
+        }
+
+        // Only remote (challengeable) providers can be initiated here
+        var providers = GetAuthenticationProviderList(authenticationOptions.Value);
+        var known = providers.Any(x =>
+            x.Name == provider &&
+            x.Type is IdentityProviderType.OAuth or IdentityProviderType.OpenIdConnect);
+
+        if (known is false)
         {
             return TypedResults.NotFound();
         }
@@ -68,9 +85,14 @@ public partial class Endpoints : IEndpointMapper
         return TypedResults.Challenge(properties, [provider]);
     }
 
-    private static List<AuthenticationProviderDto> GetAuthenticationProviderList(IConfiguration configuration)
+    [EndpointSummary("Sign out")]
+    private static SignOutHttpResult Logout()
     {
-        var options = configuration.GetOptions<AuthenticationOptions>("Authentication");
+        return TypedResults.SignOut(new AuthenticationProperties(), [AtmosAuthenticationDefaults.Scheme]);
+    }
+
+    private static List<AuthenticationProviderDto> GetAuthenticationProviderList(AuthenticationOptions options)
+    {
         var result = new List<AuthenticationProviderDto>();
 
         // OpenID Connect
@@ -79,7 +101,7 @@ public partial class Endpoints : IEndpointMapper
             {
                 Name = oidc.Name,
                 DisplayName = oidc.DisplayName,
-                Type = IdentityProviderType.OAuth
+                Type = IdentityProviderType.OpenIdConnect
             }));
 
         // OAuth
@@ -102,6 +124,28 @@ public partial class Endpoints : IEndpointMapper
             });
         }
 
+        // Magic Link
+        if (options.MagicLink.Enable)
+        {
+            result.Add(new AuthenticationProviderDto
+            {
+                Name = "MagicLink",
+                DisplayName = "Magic Link",
+                Type = IdentityProviderType.MagicLink
+            });
+        }
+
         return result;
+    }
+
+    private static bool IsLocalUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url) || url[0] != '/')
+        {
+            return false;
+        }
+
+        // "//host" and "/\host" are treated as protocol-relative absolute URLs by browsers
+        return url.Length == 1 || (url[1] != '/' && url[1] != '\\');
     }
 }

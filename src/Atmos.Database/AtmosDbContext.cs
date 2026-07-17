@@ -1,3 +1,4 @@
+using Atmos.Domain.Entities.Abstract;
 using Atmos.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -5,8 +6,11 @@ namespace Atmos.Database;
 
 public class AtmosDbContext : DbContext
 {
-    public AtmosDbContext(DbContextOptions<AtmosDbContext> options) : base(options)
+    private readonly TimeProvider _timeProvider;
+
+    public AtmosDbContext(DbContextOptions<AtmosDbContext> options, TimeProvider? timeProvider = null) : base(options)
     {
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <inheritdoc />
@@ -15,6 +19,41 @@ public class AtmosDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AtmosDbContext).Assembly);
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    /// <inheritdoc />
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        StampTimeRecords();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        StampTimeRecords();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    private void StampTimeRecords()
+    {
+        var now = _timeProvider.GetUtcNow();
+
+        foreach (var entry in ChangeTracker.Entries<IHasTimeRecord>())
+        {
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Entity.CreateAt = now;
+                    entry.Entity.UpdateAt = now;
+                    break;
+                case EntityState.Modified:
+                    entry.Entity.UpdateAt = now;
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     #region Identity

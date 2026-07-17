@@ -17,13 +17,13 @@ public class SubscriptionConfiguration : IEntityTypeConfiguration<Subscription>
             c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
             c => c.ToList());
 
-        builder.Property(x => x.Region)
+        builder.Property(x => x.ContentTypes)
             .HasConversion(
                 v => v.Select(e => e.ToString()).ToArray(),
                 v => v.Select(Enum.Parse<SubscriptionContentType>).ToList(),
                 valueComparer
             );
 
-        builder.HasIndex(x => x.Region);
+        builder.HasIndex(x => x.ContentTypes);
     }
 }

@@ -1,24 +1,25 @@
-﻿using System.ComponentModel;
-using System.Security.Claims;
+using System.ComponentModel;
 using System.Text;
-using Atmos.Api.Endpoints.AuthenticationEndpoints.Dto;
+using Atmos.Api.Endpoints.Dto;
 using Atmos.Common.Abstract;
 using Atmos.Common.Utils;
-using Atmos.Database;
 using Atmos.Domain.Abstract;
+using Atmos.Domain.Entities.Identity;
+using Atmos.Services.Api;
 using Atmos.Services.Api.Abstract;
 using Fido2NetLib;
 using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Atmos.Api.Endpoints.AuthenticationEndpoints;
+namespace Atmos.Api.Endpoints;
 
-public partial class Endpoints
+public partial class AuthenticationEndpoints
 {
+    private static readonly TimeSpan WebAuthnChallengeLifetime = TimeSpan.FromMinutes(5);
+
     [EndpointSummary("WebAuthn registration")]
     private static async Task<Ok<WebAuthnAttestationDto>> AttestationAsync(
         [FromServices] IFido2 fido2,
@@ -26,38 +27,37 @@ public partial class Endpoints
         [FromServices] IDistributedCache distributedCache,
         [FromServices] IGuidProvider guidProvider)
     {
-        Guid? userId = null;
-        var creatingUser = false;
-        var existingCredentials = new List<PublicKeyCredentialDescriptor>();
+        User? user = null;
+        if (currentUser.IsAuthenticated)
+        {
+            user = await currentUser.GetUserAsync(true);
+        }
 
+        Guid userId;
+        bool creatingUser;
+        var existingCredentials = new List<PublicKeyCredentialDescriptor>();
         var fido2User = new Fido2User();
 
-        if (currentUser.Principal?.Identity?.IsAuthenticated is not true)
+        if (user is null)
         {
-            var userDisplayName = RandomUtils.GetRandomAlphabetString(6);
-
             userId = guidProvider.Create();
             creatingUser = true;
 
             fido2User.Name = userId.ToString();
-            fido2User.DisplayName = userDisplayName;
-            fido2User.Id = Encoding.UTF8.GetBytes(userId.ToString()!);
+            fido2User.DisplayName = RandomUtils.GetRandomAlphabetString(6);
+            fido2User.Id = Encoding.UTF8.GetBytes(userId.ToString());
         }
         else
         {
-            var user = await currentUser.GetUserAsync(true);
-            if (user is not null)
-            {
-                userId = user.UserId;
-                creatingUser = false;
-                existingCredentials = user.WebAuthnDevices
-                    .Select(x => new PublicKeyCredentialDescriptor(x.CredentialId))
-                    .ToList();
+            userId = user.UserId;
+            creatingUser = false;
+            existingCredentials = user.WebAuthnDevices
+                .Select(x => new PublicKeyCredentialDescriptor(x.CredentialId))
+                .ToList();
 
-                fido2User.Name = user.UserId.ToString();
-                fido2User.DisplayName = user.Nickname;
-                fido2User.Id = Encoding.UTF8.GetBytes(user.UserId.ToString());
-            }
+            fido2User.Name = user.UserId.ToString();
+            fido2User.DisplayName = user.Nickname;
+            fido2User.Id = Encoding.UTF8.GetBytes(user.UserId.ToString());
         }
 
         var options = fido2.RequestNewCredential(new RequestNewCredentialParams
@@ -75,11 +75,14 @@ public partial class Endpoints
 
         var attestationId = guidProvider.Create();
         var cacheKey = GetAttestationChallengeCacheKey(attestationId);
-        await distributedCache.SetStringAsync(cacheKey, options.ToJson());
+        await distributedCache.SetStringAsync(cacheKey, options.ToJson(), new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = WebAuthnChallengeLifetime
+        });
 
         return TypedResults.Ok(new WebAuthnAttestationDto
         {
-            UserId = userId!.Value,
+            UserId = userId,
             DisplayName = fido2User.DisplayName,
             IsCreatingNewUser = creatingUser,
             AttestationId = attestationId,
@@ -90,13 +93,13 @@ public partial class Endpoints
     [EndpointSummary("WebAuthn registration verification")]
     private static async Task<Results<SignInHttpResult, NoContent, BadRequest<string>>> AttestationVerifyAsync(
         [FromRoute(Name = "attestationId"), Description("Attestation ID")] Guid attestationId,
-        [FromQuery(Name = "sign_in"), Description("Set to true to return SignIn reuslt")] bool signIn,
+        [FromQuery(Name = "sign_in"), Description("Set to true to return SignIn result")] bool signIn,
         [FromBody] WebAuthnAttestationVerifyDto dto,
         [FromServices] IFido2 fido2,
         [FromServices] IDistributedCache distributedCache,
-        [FromServices] AtmosDbContext dbContext,
         [FromServices] ICurrentUser currentUser,
-        [FromServices] IUserManager userManager)
+        [FromServices] IUserManager userManager,
+        [FromServices] IUserAccountService userAccountService)
     {
         // Find the attestation
         var cacheKey = GetAttestationChallengeCacheKey(attestationId);
@@ -107,35 +110,46 @@ public partial class Endpoints
             return TypedResults.BadRequest("Invalid attestation ID");
         }
 
+        // Challenges are single-use: remove before verification so neither a failed
+        // nor a successful attempt can ever replay the same challenge
+        await distributedCache.RemoveAsync(cacheKey);
+
         // Build CredentialCreateOptions
         var credentialCreateOptions = CredentialCreateOptions.FromJson(options);
 
-        // Verify and make the credentials
-        var credential = await fido2.MakeNewCredentialAsync(new MakeNewCredentialParams
+        try
         {
-            AttestationResponse = dto.AttestationResponse,
-            OriginalOptions = credentialCreateOptions,
-            IsCredentialIdUniqueToUserCallback = async (p, token) =>
+            // Verify and make the credentials
+            var credential = await fido2.MakeNewCredentialAsync(new MakeNewCredentialParams
             {
-                var exist = await dbContext.WebAuthn.AnyAsync(x => x.CredentialId == p.CredentialId, token);
-                return exist;
+                AttestationResponse = dto.AttestationResponse,
+                OriginalOptions = credentialCreateOptions,
+                IsCredentialIdUniqueToUserCallback = async (p, _) =>
+                {
+                    var existing = await userManager.GetUserByWebAuthnAsync(p.CredentialId);
+                    return existing is null;
+                }
+            });
+
+            // Save the credential
+            var user = await currentUser.GetUserAsync() ??
+                       await userManager.CreateUserAsync(Guid.Parse(credential.User.Name), credential.User.DisplayName, [], true);
+            await userManager.AddWebAuthnAsync(user,
+                credential.Id, credential.PublicKey, credential.User.Id,
+                credential.Type.ToString(), credential.AaGuid, credential.SignCount);
+
+            if (signIn)
+            {
+                var principal = userAccountService.CreatePrincipal(user, "webauthn");
+                return TypedResults.SignIn(principal, new AuthenticationProperties(), AtmosAuthenticationDefaults.Scheme);
             }
-        });
 
-        // Save the credential
-        var user = await currentUser.GetUserAsync() ??
-                   await userManager.CreateUserAsync(Guid.Parse(credential.User.Name), credential.User.DisplayName, [], true);
-        await userManager.AddWebAuthnAsync(user,
-            credential.Id, credential.PublicKey, credential.User.Id,
-            credential.Type.ToString(), credential.AaGuid, credential.SignCount);
-
-        if (signIn)
-        {
-            // TODO: Unified claim creation
-            return TypedResults.SignIn(new ClaimsPrincipal(), new AuthenticationProperties(), "");
+            return TypedResults.NoContent();
         }
-
-        return TypedResults.NoContent();
+        catch (Fido2VerificationException)
+        {
+            return TypedResults.BadRequest("Attestation verification failed");
+        }
     }
 
     [EndpointSummary("WebAuthn assertion")]
@@ -153,7 +167,10 @@ public partial class Endpoints
         var challengeId = guidProvider.Create();
         var cacheKey = GetAssertionChallengeCacheKey(challengeId);
 
-        await distributedCache.SetStringAsync(cacheKey, options.ToJson());
+        await distributedCache.SetStringAsync(cacheKey, options.ToJson(), new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = WebAuthnChallengeLifetime
+        });
 
         var dto = new WebAuthnAssertionDto
         {
@@ -169,6 +186,7 @@ public partial class Endpoints
         [FromRoute(Name = "challengeId")] Guid challengeId,
         [FromBody] WebAuthnAssertionVerifyDto dto,
         [FromServices] IUserManager userManager,
+        [FromServices] IUserAccountService userAccountService,
         [FromServices] IFido2 fido2,
         [FromServices] IDistributedCache distributedCache)
     {
@@ -181,11 +199,14 @@ public partial class Endpoints
             return TypedResults.BadRequest("Invalid challenge ID");
         }
 
+        // Challenges are single-use
+        await distributedCache.RemoveAsync(cacheKey);
+
         // Build AssertionOptions
         var assertionOptions = AssertionOptions.FromJson(options);
 
         // Find stored credential
-        var user = await userManager.GetUserByWebAuthnAsync(dto.AssertionResponse.RawId);
+        var user = await userManager.GetUserByWebAuthnAsync(dto.AssertionResponse.RawId, true);
         if (user is null)
         {
             return TypedResults.BadRequest("Invalid credential ID");
@@ -193,22 +214,29 @@ public partial class Endpoints
         var storedCredential = user.WebAuthnDevices
             .First(x => x.CredentialId.SequenceEqual(dto.AssertionResponse.RawId));
 
-        // Verify the assertion
-        var verifyAssertionResult = await fido2.MakeAssertionAsync(new MakeAssertionParams
+        try
         {
-            AssertionResponse = dto.AssertionResponse,
-            OriginalOptions = assertionOptions,
-            StoredPublicKey = storedCredential.PublicKey,
-            StoredSignatureCounter = 0,
-            IsUserHandleOwnerOfCredentialIdCallback =  (p, _) =>
-                Task.FromResult(p.CredentialId.SequenceEqual(storedCredential.CredentialId) &&
-                                p.UserHandle.SequenceEqual(storedCredential.UserHandle))
-        });
+            // Verify the assertion
+            var verifyAssertionResult = await fido2.MakeAssertionAsync(new MakeAssertionParams
+            {
+                AssertionResponse = dto.AssertionResponse,
+                OriginalOptions = assertionOptions,
+                StoredPublicKey = storedCredential.PublicKey,
+                StoredSignatureCounter = (uint)storedCredential.SignatureCounter,
+                IsUserHandleOwnerOfCredentialIdCallback = (p, _) =>
+                    Task.FromResult(p.CredentialId.SequenceEqual(storedCredential.CredentialId) &&
+                                    p.UserHandle.SequenceEqual(storedCredential.UserHandle))
+            });
 
-        await userManager.UpdateWebAuthnCounterAsync(user, verifyAssertionResult.CredentialId, verifyAssertionResult.SignCount);
+            await userManager.UpdateWebAuthnCounterAsync(user, verifyAssertionResult.CredentialId, verifyAssertionResult.SignCount);
+        }
+        catch (Fido2VerificationException)
+        {
+            return TypedResults.BadRequest("Assertion verification failed");
+        }
 
-        // TODO: Unified claim creation
-        return TypedResults.SignIn(new ClaimsPrincipal(), new AuthenticationProperties(), "");
+        var principal = userAccountService.CreatePrincipal(user, "webauthn");
+        return TypedResults.SignIn(principal, new AuthenticationProperties(), AtmosAuthenticationDefaults.Scheme);
     }
 
     private static string GetAttestationChallengeCacheKey(Guid id)

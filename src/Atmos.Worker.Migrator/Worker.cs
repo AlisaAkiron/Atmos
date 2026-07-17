@@ -90,20 +90,9 @@ public class Worker : BackgroundService
             return;
         }
 
-        var strategy = dbContext.Database.CreateExecutionStrategy();
-
-        await strategy.ExecuteInTransactionAsync(
-            dbContext,
-            async (context, ct) =>
-            {
-                await context.Database.MigrateAsync(ct);
-            },
-            async (context, ct) =>
-            {
-                var migrations = await context.Database.GetPendingMigrationsAsync(ct);
-                return migrations.Any();
-            },
-            cancellationToken);
+        // MigrateAsync manages its own transactions; wrapping it in an outer transaction
+        // breaks migrations containing non-transactional operations
+        await dbContext.Database.MigrateAsync(cancellationToken);
     }
 
     private static async Task SeedDevelopmentDataAsync(AtmosDbContext dbContext, CancellationToken cancellationToken)

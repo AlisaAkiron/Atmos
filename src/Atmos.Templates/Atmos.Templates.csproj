@@ -23,8 +23,8 @@
 
     <ItemGroup>
       <EmbeddedResource Update="Resources\Components\MagicLinkResources.resx">
-        <Generator>ResXFileCodeGenerator</Generator>
-        <LastGenOutput>MagicLink.Designer.cs</LastGenOutput>
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>MagicLinkResources.Designer.cs</LastGenOutput>
       </EmbeddedResource>
       <EmbeddedResource Update="Resources\Components\MagicLinkResources.zh.resx">
         <DependentUpon>MagicLinkResources.resx</DependentUpon>

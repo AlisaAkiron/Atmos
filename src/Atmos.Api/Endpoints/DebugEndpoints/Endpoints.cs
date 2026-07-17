@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using Atmos.Services.Api.Abstract;
@@ -7,9 +7,9 @@ using Atmos.Templates.Components.Emails;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Atmos.Api.Endpoints.DebugEndpoints;
+namespace Atmos.Api.Endpoints;
 
-public class Endpoints : IEndpointMapper
+public class DebugEndpoints : IEndpointMapper
 {
     public static void MapEndpoints(IEndpointRouteBuilder endpoints)
     {

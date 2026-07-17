@@ -1,12 +1,16 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Atmos.Common.Extensions;
+using Atmos.Services.Api.Abstract;
 using Atmos.Services.Api.Enums;
 using Atmos.Services.Api.Options.Authentication;
 using Fido2NetLib;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Tokens;
+using AuthenticationOptions = Atmos.Services.Api.Options.Authentication.AuthenticationOptions;
 
 namespace Atmos.Services.Api.Components;
 
@@ -14,19 +18,47 @@ public static class AtmosIdentity
 {
     internal static IHostApplicationBuilder ConfigureIdentity(this IHostApplicationBuilder builder)
     {
-        const string defaultScheme = "atmos";
-
         builder.Services.AddAuthorization();
-        var authenticationBuilder = builder.Services.AddAuthentication(defaultScheme);
 
-        authenticationBuilder.AddCookie("atmos", o =>
+        builder.Services.Configure<AuthenticationOptions>(builder.Configuration.GetSection("Authentication"));
+
+        var authenticationBuilder = builder.Services.AddAuthentication(AtmosAuthenticationDefaults.Scheme);
+
+        authenticationBuilder.AddCookie(AtmosAuthenticationDefaults.Scheme, o =>
         {
-            o.Cookie.Name = "atmos";
-            o.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+            o.Cookie.Name = AtmosAuthenticationDefaults.Scheme;
+            o.Cookie.HttpOnly = true;
+            o.Cookie.SameSite = SameSiteMode.Lax;
+            o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            o.ExpireTimeSpan = TimeSpan.FromDays(14);
+            o.SlidingExpiration = true;
+
+            // This cookie authenticates an API: return status codes instead of
+            // redirecting to a login page that does not exist
+            o.Events.OnRedirectToLogin = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            };
+            o.Events.OnRedirectToAccessDenied = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            };
         });
 
         var authenticationOptions = builder.Configuration
             .GetOptions<AuthenticationOptions>("Authentication");
+
+        // Emailed links must never be derived from the attacker-controlled Host header,
+        // so outside Development the public base URL has to be configured explicitly
+        if (authenticationOptions.MagicLink.Enable &&
+            string.IsNullOrEmpty(authenticationOptions.MagicLink.LinkBaseUrl) &&
+            builder.Environment.IsDevelopment() is false)
+        {
+            throw new InvalidOperationException(
+                "Authentication:MagicLink:LinkBaseUrl must be configured when magic link sign-in is enabled outside Development");
+        }
 
         // OpenID Connect
         foreach (var oidc in authenticationOptions.OpenIdConnect)
@@ -45,42 +77,16 @@ public static class AtmosIdentity
 
                 o.SaveTokens = true;
                 o.GetClaimsFromUserInfoEndpoint = true;
-                o.TokenValidationParameters = new TokenValidationParameters
-                {
-                    LogValidationExceptions =  true,
-                };
+                o.TokenValidationParameters.LogValidationExceptions = true;
 
                 o.MetadataAddress = oidc.MetadataAddress;
 
                 o.CallbackPath = $"/auth/callback/{oidc.Name}";
 
-                // Custom claim mappings
                 var claimMappings = oidc.ClaimMappings;
-                if (!string.IsNullOrEmpty(claimMappings.Sub))
-                {
-                }
-
-                if (!string.IsNullOrEmpty(claimMappings.Name))
-                {
-                }
-
-                if (!string.IsNullOrEmpty(claimMappings.Email))
-                {
-                }
-
                 o.Events = new OpenIdConnectEvents
                 {
-                    OnTicketReceived = context =>
-                    {
-                        if (context.Principal?.Identity is not ClaimsIdentity identity)
-                            return Task.CompletedTask;
-
-                        RemapClaim(identity, claimMappings.Sub, ClaimTypes.NameIdentifier);
-                        RemapClaim(identity, claimMappings.Name, ClaimTypes.Name);
-                        RemapClaim(identity, claimMappings.Email, ClaimTypes.Email);
-
-                        return Task.CompletedTask;
-                    }
+                    OnTicketReceived = context => OnTicketReceivedAsync(context, oidc.Name, claimMappings)
                 };
             });
         }
@@ -96,6 +102,7 @@ public static class AtmosIdentity
                         o.ClientId = oauth.ClientId;
                         o.ClientSecret = oauth.ClientSecret;
                         o.CallbackPath = $"/auth/callback/{oauth.Name}";
+                        o.Events.OnTicketReceived = context => OnTicketReceivedAsync(context, oauth.Name, null);
                     });
                     break;
                 case OAuthProviderType.Discord:
@@ -104,6 +111,7 @@ public static class AtmosIdentity
                         o.ClientId = oauth.ClientId;
                         o.ClientSecret = oauth.ClientSecret;
                         o.CallbackPath = $"/auth/callback/{oauth.Name}";
+                        o.Events.OnTicketReceived = context => OnTicketReceivedAsync(context, oauth.Name, null);
                     });
                     break;
                 case OAuthProviderType.Microsoft:
@@ -112,6 +120,7 @@ public static class AtmosIdentity
                         o.ClientId = oauth.ClientId;
                         o.ClientSecret = oauth.ClientSecret;
                         o.CallbackPath = $"/auth/callback/{oauth.Name}";
+                        o.Events.OnTicketReceived = context => OnTicketReceivedAsync(context, oauth.Name, null);
                     });
                     break;
                 case OAuthProviderType.Google:
@@ -120,6 +129,7 @@ public static class AtmosIdentity
                         o.ClientId = oauth.ClientId;
                         o.ClientSecret = oauth.ClientSecret;
                         o.CallbackPath = $"/auth/callback/{oauth.Name}";
+                        o.Events.OnTicketReceived = context => OnTicketReceivedAsync(context, oauth.Name, null);
                     });
                     break;
                 default:
@@ -138,12 +148,36 @@ public static class AtmosIdentity
                 ServerDomain = webAuthn.ServerDomain,
                 Origins = webAuthn.Origins.ToHashSet()
             };
-            var fido2 = new Fido2(fido2Configuration);
 
-            builder.Services.AddSingleton<IFido2, Fido2>(_ => fido2);
+            builder.Services.AddSingleton<IFido2>(new Fido2(fido2Configuration));
         }
 
         return builder;
+    }
+
+    /// <summary>
+    /// Turns the external provider's principal into a local one: remaps configured claims,
+    /// provisions the local user and social login link on first sign-in, then replaces the
+    /// principal so the cookie only ever carries local identity claims.
+    /// </summary>
+    private static async Task OnTicketReceivedAsync(TicketReceivedContext context, string provider, ClaimMappingOptions? claimMappings)
+    {
+        if (context.Principal?.Identity is not ClaimsIdentity identity)
+        {
+            return;
+        }
+
+        if (claimMappings is not null)
+        {
+            RemapClaim(identity, claimMappings.Sub, ClaimTypes.NameIdentifier);
+            RemapClaim(identity, claimMappings.Name, ClaimTypes.Name);
+            RemapClaim(identity, claimMappings.Email, ClaimTypes.Email);
+        }
+
+        var accountService = context.HttpContext.RequestServices.GetRequiredService<IUserAccountService>();
+
+        var user = await accountService.GetOrCreateFromExternalLoginAsync(provider, context.Principal);
+        context.Principal = accountService.CreatePrincipal(user, provider);
     }
 
     private static void RemapClaim(ClaimsIdentity identity, string? sourceClaimType, string targetClaimType)

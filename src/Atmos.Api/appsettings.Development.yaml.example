@@ -1,0 +1,45 @@
+# Copy to appsettings.Development.yaml and fill in real values.
+# appsettings.Development.yaml is gitignored - never commit real secrets.
+
+Serilog:
+  MinimumLevel:
+    Default: Debug
+
+Authentication:
+  OpenIdConnect:
+    - Name: my-idp
+      DisplayName: My Identity Provider
+      Authority: https://idp.example.com/application/o/atmos-dev/
+      ClientId: <client-id>
+      ClientSecret: <client-secret>
+      MetadataAddress: https://idp.example.com/application/o/atmos-dev/.well-known/openid-configuration
+      Scopes:
+        - openid
+        - profile
+        - email
+  OAuthProviders:
+    - Type: GitHub
+      Name: github
+      DisplayName: GitHub
+      ClientId: <client-id>
+      ClientSecret: <client-secret>
+  WebAuthn:
+    Enable: true
+    ServerDomain: localhost
+    ServerName: Atmos Dev
+    Origins:
+      - https://localhost:7136
+  MagicLink:
+    Enable: true
+    TokenLength: 8
+    ExpirationMinutes: 10
+    # Required outside Development (never derived from the request Host header):
+    # LinkBaseUrl: https://app.example.com/auth/magic-link
+
+Email:
+  SenderAddress: atmos@localhost
+  SenderName: Atmos
+
+# Cors:
+#   AllowedOrigins:
+#     - https://app.example.com

@@ -12,9 +12,9 @@ public class DefaultApiTransformer : IOpenApiDocumentTransformer
             ["200"] = new OpenApiResponse
             {
                 Description = "System healthy",
-                Content =  new Dictionary<string, IOpenApiMediaType>
+                Content = new Dictionary<string, OpenApiMediaType>
                 {
-                    ["text/plain"] = new OpenApiMediaType()
+                    ["text/plain"] = new OpenApiMediaType
                     {
                         Example = "Health"
                     }
@@ -23,9 +23,9 @@ public class DefaultApiTransformer : IOpenApiDocumentTransformer
             ["503"] = new OpenApiResponse
             {
                 Description = "System unhealthy",
-                Content = new Dictionary<string, IOpenApiMediaType>
+                Content = new Dictionary<string, OpenApiMediaType>
                 {
-                    ["text/plain"] = new OpenApiMediaType()
+                    ["text/plain"] = new OpenApiMediaType
                     {
                         Example = "Unhealthy"
                     }

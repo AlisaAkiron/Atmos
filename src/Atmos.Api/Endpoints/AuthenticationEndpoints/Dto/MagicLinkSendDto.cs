@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Atmos.Api.Endpoints.AuthenticationEndpoints.Dto;
+namespace Atmos.Api.Endpoints.Dto;
 
 public record MagicLinkSendDto
 {
