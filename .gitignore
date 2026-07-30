@@ -513,3 +513,7 @@ $RECYCLE.BIN/
 *.development.yaml
 *.development.json
 *.development.toml
+
+# Agent-authored docs (specs, plans, generated output)
+docs/superpowers/
+docs/generated/
