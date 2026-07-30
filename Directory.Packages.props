@@ -4,7 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Alexinea.Extensions.Configuration.Yaml" Version="7.0.0" />
-    <PackageVersion Include="Asp.Versioning.Http" Version="10.0.0" />
+    <PackageVersion Include="Asp.Versioning.Http" Version="10.0.1" />
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.4.6" />
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.4.6" />
     <PackageVersion Include="Aspire.Hosting.Redis" Version="13.4.6" />
@@ -31,22 +31,23 @@
     <PackageVersion Include="Microsoft.Extensions.Localization" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.8.0" />
-    <!-- Microsoft.AspNetCore.OpenApi depends on Microsoft.OpenApi 2.0.0, which triggers
-         NuGet audit warning NU1903 (GHSA-v5pm-xwqc-g5wc), so pin the latest patched 2.x.
-         Must stay on 2.x: the Microsoft.AspNetCore.OpenApi source generator emits code
-         that is incompatible with the Microsoft.OpenApi 3.x API surface. If a future 2.x
-         advisory appears with no fixed 2.x release, NU1903 stays a warning instead of
-         failing the build (WarningsNotAsErrors in Directory.Build.props). -->
-    <PackageVersion Include="Microsoft.OpenApi" Version="3.9.0" />
+    <!-- Microsoft.AspNetCore.OpenApi's minimum dependency, Microsoft.OpenApi 2.0.0, is
+         vulnerable to GHSA-v5pm-xwqc-g5wc (NuGet audit warning NU1903; fixed in 2.7.5),
+         so pin the latest patched 2.x. Must stay on 2.x: the Microsoft.AspNetCore.OpenApi
+         source generator emits code that is incompatible with the Microsoft.OpenApi 3.x
+         API surface (upgrading to 3.x breaks the build). If a future 2.x advisory appears
+         with no fixed 2.x release, NU1903 stays a warning instead of failing the build
+         (WarningsNotAsErrors in Directory.Build.props). -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.11.0" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.3" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.16.0" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.16.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.16.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.16.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.16.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.17.0" />
     <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.13" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.16" />
     <PackageVersion Include="Serilog.Enrichers.Context" Version="4.6.5" />
     <PackageVersion Include="Serilog.Enrichers.Process" Version="3.0.0" />
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
