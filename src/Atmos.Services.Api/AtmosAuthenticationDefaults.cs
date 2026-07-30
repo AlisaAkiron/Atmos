@@ -16,4 +16,14 @@ public static class AtmosAuthenticationDefaults
     /// Rate limiting policy applied to credential-related authentication endpoints.
     /// </summary>
     public const string RateLimitPolicy = "authentication";
+
+    /// <summary>
+    /// Role claim value issued to the site owner; gates every admin endpoint.
+    /// </summary>
+    public const string SiteOwnerRole = "site-owner";
+
+    /// <summary>
+    /// Authorization policy name requiring <see cref="SiteOwnerRole" />.
+    /// </summary>
+    public const string SiteOwnerPolicy = "SiteOwner";
 }

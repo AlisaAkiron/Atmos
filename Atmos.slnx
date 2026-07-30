@@ -2,6 +2,7 @@
   <Folder Name="/Api/">
     <Project Path="src/Atmos.Api/Atmos.Api.csproj" />
     <Project Path="src/Atmos.Services.Api/Atmos.Services.Api.csproj" />
+    <Project Path="src/Atmos.Services.Media/Atmos.Services.Media.csproj" />
   </Folder>
   <Folder Name="/Aspire/">
     <Project Path="src/Atmos.AppHost/Atmos.AppHost.csproj" />
@@ -21,6 +22,9 @@
     <File Path="Directory.Packages.props" />
     <File Path="LICENSE" />
     <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="tests/Atmos.Tests.Unit/Atmos.Tests.Unit.csproj" />
   </Folder>
   <Folder Name="/Web/">
     <Project Path="src/Atmos.Web/Atmos.Web.csproj" />

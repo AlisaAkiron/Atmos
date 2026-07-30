@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+        <!-- CA1707: test method names use underscores by convention.
+             CA1861: inline expected-value arrays are clearer than shared static fields in assertions. -->
+        <NoWarn>$(NoWarn);CA1707;CA1861</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Atmos.Common\Atmos.Common.csproj" />
+        <ProjectReference Include="..\..\src\Atmos.Services.Media\Atmos.Services.Media.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="TUnit" />
+    </ItemGroup>
+
+</Project>

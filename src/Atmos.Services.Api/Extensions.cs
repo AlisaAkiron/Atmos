@@ -8,6 +8,7 @@ using Atmos.Services.Api.Models;
 using Atmos.Services.Api.OpenApi;
 using Atmos.Services.Api.Options;
 using Atmos.Services.Api.Services;
+using Atmos.Services.Media;
 using Atmos.Templates;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
@@ -28,6 +29,7 @@ public static class Extensions
     {
         builder.ConfigureNpgsql();
         builder.ConfigureIdentity();
+        builder.AddAtmosMediaServices();
 
         var svcName = builder.Configuration.GetOtelServiceName();
 
@@ -44,6 +46,7 @@ public static class Extensions
 
         builder.AddAtmosCors();
         builder.AddAtmosRateLimiting();
+        builder.ConfigureContentCaching();
 
         builder.Services.AddOpenApi(svcName, options =>
         {
@@ -98,10 +101,18 @@ public static class Extensions
         });
 
         app.UseCors();
+
+        // Media is public and needs no auth; serve it before the rest of the pipeline
+        app.UseAtmosMediaFiles();
+
         app.UseRateLimiter();
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // Must run after authentication so the "skip caching for authenticated
+        // requests" gate sees the populated user
+        app.UseOutputCache();
 
         var api = app.NewVersionedApi();
 

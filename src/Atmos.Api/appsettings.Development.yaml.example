@@ -37,3 +37,19 @@ Email:
 # Cors:
 #   AllowedOrigins:
 #     - https://app.example.com
+
+# Media storage. When running via the AppHost these are injected as env vars -
+# no manual config needed. Fill in only when running the API standalone.
+# Media:
+#   Provider: Local              # Local | S3
+#   PublicBaseUrl: https://localhost:7136/media
+#   MaxUploadSizeBytes: 104857600
+#   Local:
+#     RootPath: ""               # empty => {ContentRootPath}/media-storage
+#     RequestPath: /media
+#   S3:
+#     ServiceUrl: https://<account-id>.r2.cloudflarestorage.com
+#     AccessKeyId: <access-key-id>
+#     SecretAccessKey: <secret-access-key>
+#     Bucket: atmos-resources
+#     EnsureBucketOnStartup: false

@@ -1,5 +1,7 @@
 using Atmos.Domain.Entities.Abstract;
+using Atmos.Domain.Entities.Content;
 using Atmos.Domain.Entities.Identity;
+using Atmos.Domain.Entities.MediaStorage;
 using Microsoft.EntityFrameworkCore;
 
 namespace Atmos.Database;
@@ -62,6 +64,24 @@ public class AtmosDbContext : DbContext
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<User> Users => Set<User>();
     public DbSet<WebAuthn> WebAuthn => Set<WebAuthn>();
+
+    #endregion
+
+    #region Content
+
+    public DbSet<Article> Articles => Set<Article>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<FriendLink> FriendLinks => Set<FriendLink>();
+    public DbSet<Page> Pages => Set<Page>();
+    public DbSet<SocialLink> SocialLinks => Set<SocialLink>();
+    public DbSet<Tag> Tags => Set<Tag>();
+
+    #endregion
+
+    #region Media
+
+    public DbSet<Media> Media => Set<Media>();
+    public DbSet<MediaReference> MediaReferences => Set<MediaReference>();
 
     #endregion
 }

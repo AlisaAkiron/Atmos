@@ -8,6 +8,7 @@
     <ProjectReference Include="..\Atmos.Database\Atmos.Database.csproj" />
     <ProjectReference Include="..\Atmos.Templates\Atmos.Templates.csproj" />
     <ProjectReference Include="..\Atmos.Services.Default\Atmos.Services.Default.csproj" />
+    <ProjectReference Include="..\Atmos.Services.Media\Atmos.Services.Media.csproj" />
   </ItemGroup>
 
   <ItemGroup>

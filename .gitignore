@@ -517,3 +517,9 @@ $RECYCLE.BIN/
 # Agent-authored docs (specs, plans, generated output)
 docs/superpowers/
 docs/generated/
+
+# Agent orchestration scratch (subagent-driven execution workspace)
+.superpowers/
+
+# Local media provider storage (dev)
+.local-media/

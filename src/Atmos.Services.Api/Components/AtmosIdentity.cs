@@ -18,7 +18,11 @@ public static class AtmosIdentity
 {
     internal static IHostApplicationBuilder ConfigureIdentity(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddAuthorization();
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy(AtmosAuthenticationDefaults.SiteOwnerPolicy,
+                policy => policy.RequireRole(AtmosAuthenticationDefaults.SiteOwnerRole));
+        });
 
         builder.Services.Configure<AuthenticationOptions>(builder.Configuration.GetSection("Authentication"));
 

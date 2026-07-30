@@ -184,3 +184,9 @@ dotnet_diagnostic.S3604.severity = silent
 dotnet_diagnostic.S6602.severity = silent
 dotnet_diagnostic.S6960.severity = silent
 dotnet_diagnostic.IDE0305.severity = silent
+
+# EF Core migrations are tool-generated; analyzer rules do not apply to them
+# (hand-fixing them would be undone by the next 'dotnet ef migrations add')
+[**/Migrations/*.cs]
+generated_code = true
+dotnet_diagnostic.CA1861.severity = none

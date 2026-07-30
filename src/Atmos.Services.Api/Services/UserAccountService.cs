@@ -34,7 +34,7 @@ public class UserAccountService : IUserAccountService
 
         if (user.IsSiteOwner)
         {
-            identity.AddClaim(new Claim(ClaimTypes.Role, "site-owner"));
+            identity.AddClaim(new Claim(ClaimTypes.Role, AtmosAuthenticationDefaults.SiteOwnerRole));
         }
 
         return new ClaimsPrincipal(identity);

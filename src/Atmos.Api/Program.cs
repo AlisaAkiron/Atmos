@@ -21,6 +21,12 @@ app.MapAtmosDefaultEndpoints();
 app.MapAtmosApiEndpoints(api =>
 {
     api.MapEndpoints<AuthenticationEndpoints>();
+    api.MapEndpoints<SocialLinkEndpoints>();
+    api.MapEndpoints<FriendLinkEndpoints>();
+    api.MapEndpoints<TaxonomyEndpoints>();
+    api.MapEndpoints<ArticleEndpoints>();
+    api.MapEndpoints<PageEndpoints>();
+    api.MapEndpoints<MediaEndpoints>();
 
     if (app.Environment.IsProduction() is false)
     {
