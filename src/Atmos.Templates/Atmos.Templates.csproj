@@ -9,28 +9,6 @@
       <PackageReference Include="Microsoft.Extensions.Localization" />
     </ItemGroup>
 
-  
-    <ItemGroup>
-      <Compile Update="Components\Emails\MagicLinkViewModel.cs">
-        <DependentUpon>MagicLink.razor</DependentUpon>
-      </Compile>
-      <Compile Update="Resources\Components\MagicLinkResources.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>MagicLinkResources.resx</DependentUpon>
-      </Compile>
-    </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Update="Resources\Components\MagicLinkResources.resx">
-        <Generator>PublicResXFileCodeGenerator</Generator>
-        <LastGenOutput>MagicLinkResources.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Resources\Components\MagicLinkResources.zh.resx">
-        <DependentUpon>MagicLinkResources.resx</DependentUpon>
-      </EmbeddedResource>
-    </ItemGroup>
-  
     <ItemGroup>
       <EmbeddedResource Include="Resources\Images\logo.svg" />
     </ItemGroup>

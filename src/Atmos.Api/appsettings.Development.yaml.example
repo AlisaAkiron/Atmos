@@ -29,12 +29,6 @@ Authentication:
     ServerName: Atmos Dev
     Origins:
       - https://localhost:7136
-  MagicLink:
-    Enable: true
-    TokenLength: 8
-    ExpirationMinutes: 10
-    # Required outside Development (never derived from the request Host header):
-    # LinkBaseUrl: https://app.example.com/auth/magic-link
 
 Email:
   SenderAddress: atmos@localhost

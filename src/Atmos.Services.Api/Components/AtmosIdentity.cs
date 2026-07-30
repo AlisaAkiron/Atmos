@@ -50,16 +50,6 @@ public static class AtmosIdentity
         var authenticationOptions = builder.Configuration
             .GetOptions<AuthenticationOptions>("Authentication");
 
-        // Emailed links must never be derived from the attacker-controlled Host header,
-        // so outside Development the public base URL has to be configured explicitly
-        if (authenticationOptions.MagicLink.Enable &&
-            string.IsNullOrEmpty(authenticationOptions.MagicLink.LinkBaseUrl) &&
-            builder.Environment.IsDevelopment() is false)
-        {
-            throw new InvalidOperationException(
-                "Authentication:MagicLink:LinkBaseUrl must be configured when magic link sign-in is enabled outside Development");
-        }
-
         // OpenID Connect
         foreach (var oidc in authenticationOptions.OpenIdConnect)
         {

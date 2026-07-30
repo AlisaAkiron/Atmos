@@ -2,8 +2,6 @@ using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using Atmos.Services.Api.Abstract;
-using Atmos.Templates;
-using Atmos.Templates.Components.Emails;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,7 +16,6 @@ public class DebugEndpoints : IEndpointMapper
             .WithTags("Debug");
 
         debugGroup.MapGet("/auth/userinfo", GetDebugUserInfo);
-        debugGroup.MapGet("/email/render/{viewName}", GetDebugRenderEmail);
     }
 
     private static Ok<string> GetDebugUserInfo(
@@ -73,26 +70,5 @@ public class DebugEndpoints : IEndpointMapper
         }
 
         return TypedResults.Ok(sb.ToString());
-    }
-
-    private static async Task<Ok<string>> GetDebugRenderEmail(
-        [FromServices] TemplateRenderer templateRenderer,
-        [FromRoute(Name = "viewName")] string viewName)
-    {
-        switch (viewName)
-        {
-            case "MagicLink":
-            {
-                var result = await templateRenderer.RenderTemplateAsync<MagicLinkComposite, MagicLinkViewModel>(new MagicLinkViewModel
-                {
-                    Token = "123456",
-                    Link = "https://example.com/magiclink",
-                    ExpirationMinutes = 10
-                });
-                return TypedResults.Ok(result);
-            }
-        }
-
-        return TypedResults.Ok("No view found");
     }
 }

@@ -8,7 +8,7 @@ public static class AtmosAuthenticationDefaults
     public const string Scheme = "atmos";
 
     /// <summary>
-    /// Claim type recording which method (provider name, "webauthn", "magic-link") authenticated the session.
+    /// Claim type recording which method (provider name, "webauthn") authenticated the session.
     /// </summary>
     public const string AuthenticationMethodClaimType = "atmos:authentication_method";
 

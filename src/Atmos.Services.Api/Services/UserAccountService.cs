@@ -75,21 +75,6 @@ public class UserAccountService : IUserAccountService
         return user;
     }
 
-    public async Task<User> GetOrCreateByEmailAsync(string email)
-    {
-        var normalized = EmailUtils.Normalize(email);
-
-        var existing = await _userManager.GetUserByEmailAsync(normalized, true);
-        if (existing is not null)
-        {
-            return existing;
-        }
-
-        var nickname = GetNicknameFromEmail(normalized) ?? normalized;
-
-        return await _userManager.CreateUserAsync(_guidProvider.Create(), nickname, [normalized]);
-    }
-
     private static string? GetNicknameFromEmail(string? email)
     {
         if (email is null)

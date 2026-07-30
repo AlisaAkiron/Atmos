@@ -7,6 +7,4 @@ public record AuthenticationOptions
     public List<OAuthProviderOptions> OAuthProviders { get; set; } = [];
 
     public WebAuthnOptions WebAuthn { get; set; } = new();
-
-    public MagicLinkOptions MagicLink { get; set; } = new();
 }

@@ -22,22 +22,22 @@ public partial class AuthenticationEndpoints : IEndpointMapper
         authGroup.MapGet("/login/{provider}", InitiateAuthentication);
         authGroup.MapPost("/logout", Logout);
 
-        // WebAuthn
-        var webAuthnGroup = authGroup.MapGroup("/webauthn")
-            .RequireRateLimiting(AtmosAuthenticationDefaults.RateLimitPolicy);
+        // WebAuthn handlers resolve IFido2, which ConfigureIdentity only registers when
+        // WebAuthn is enabled. Mapping them unconditionally turns that missing registration
+        // into a 500 at request time, so leave the routes unmapped instead.
+        var authenticationOptions = endpoints.ServiceProvider
+            .GetRequiredService<IOptions<AuthenticationOptions>>().Value;
 
-        webAuthnGroup.MapPost("/attestation", AttestationAsync);
-        webAuthnGroup.MapPost("/attestation/{attestationId:guid}", AttestationVerifyAsync);
-        webAuthnGroup.MapPost("/assertion", AssertionAsync);
-        webAuthnGroup.MapPost("/assertion/{challengeId:guid}", AssertionVerifyAsync);
+        if (authenticationOptions.WebAuthn.Enable)
+        {
+            var webAuthnGroup = authGroup.MapGroup("/webauthn")
+                .RequireRateLimiting(AtmosAuthenticationDefaults.RateLimitPolicy);
 
-        // Magic Link
-        var magicLinkGroup = authGroup.MapGroup("/magic-link")
-            .RequireRateLimiting(AtmosAuthenticationDefaults.RateLimitPolicy);
-
-        magicLinkGroup.MapPost("/send", SendLinkAsync);
-        magicLinkGroup.MapGet("/verify", VerifyLinkAsync);
-        magicLinkGroup.MapPost("/verify", VerifyTokenAsync);
+            webAuthnGroup.MapPost("/attestation", AttestationAsync);
+            webAuthnGroup.MapPost("/attestation/{attestationId:guid}", AttestationVerifyAsync);
+            webAuthnGroup.MapPost("/assertion", AssertionAsync);
+            webAuthnGroup.MapPost("/assertion/{challengeId:guid}", AssertionVerifyAsync);
+        }
     }
 
     [EndpointSummary("Get authentication providers")]
@@ -121,17 +121,6 @@ public partial class AuthenticationEndpoints : IEndpointMapper
                 Name = "WebAuthn",
                 DisplayName = "WebAuthn",
                 Type = IdentityProviderType.WebAuthn
-            });
-        }
-
-        // Magic Link
-        if (options.MagicLink.Enable)
-        {
-            result.Add(new AuthenticationProviderDto
-            {
-                Name = "MagicLink",
-                DisplayName = "Magic Link",
-                Type = IdentityProviderType.MagicLink
             });
         }
 
