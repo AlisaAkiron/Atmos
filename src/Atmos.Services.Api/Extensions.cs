@@ -28,6 +28,7 @@ public static class Extensions
     public static IHostApplicationBuilder AddAtmosApiServices(this IHostApplicationBuilder builder)
     {
         builder.ConfigureNpgsql();
+        builder.ConfigureCaching();
         builder.ConfigureIdentity();
         builder.AddAtmosMediaServices();
 

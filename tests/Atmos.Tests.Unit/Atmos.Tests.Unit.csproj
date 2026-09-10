@@ -10,6 +10,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Atmos.Common\Atmos.Common.csproj" />
+        <ProjectReference Include="..\..\src\Atmos.Database\Atmos.Database.csproj" />
+        <ProjectReference Include="..\..\src\Atmos.Services.Default\Atmos.Services.Default.csproj" />
         <ProjectReference Include="..\..\src\Atmos.Services.Media\Atmos.Services.Media.csproj" />
     </ItemGroup>
 

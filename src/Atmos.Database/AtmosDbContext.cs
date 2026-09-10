@@ -1,4 +1,5 @@
 using Atmos.Domain.Entities.Abstract;
+using Atmos.Domain.Entities.Caching;
 using Atmos.Domain.Entities.Content;
 using Atmos.Domain.Entities.Identity;
 using Atmos.Domain.Entities.MediaStorage;
@@ -82,6 +83,12 @@ public class AtmosDbContext : DbContext
 
     public DbSet<Media> Media => Set<Media>();
     public DbSet<MediaReference> MediaReferences => Set<MediaReference>();
+
+    #endregion
+
+    #region Caching
+
+    public DbSet<AtmosCache> AtmosCaches => Set<AtmosCache>();
 
     #endregion
 }

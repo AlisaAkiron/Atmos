@@ -1,4 +1,5 @@
-﻿using Atmos.Services.Default.Configurator;
+﻿using Atmos.Services.Default.Caching;
+using Atmos.Services.Default.Configurator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Configuration;
@@ -24,9 +25,6 @@ public static class Extensions
             http.AddServiceDiscovery();
         });
 
-        builder.AddRedisOutputCache("Redis");
-        builder.AddRedisDistributedCache("Redis");
-
         builder.Services.AddSingleton(TimeProvider.System);
 
         return builder;
@@ -37,8 +35,8 @@ public static class Extensions
         var healthChecks = app.MapGroup("");
 
         healthChecks
-            .CacheOutput("HealthChecks")
-            .WithRequestTimeout("HealthChecks");
+            .CacheOutput(AtmosOutputCache.HealthChecksPolicy)
+            .WithRequestTimeout(AtmosOutputCache.HealthChecksPolicy);
 
         healthChecks.MapHealthChecks("/health");
         healthChecks.MapHealthChecks("/alive", new HealthCheckOptions

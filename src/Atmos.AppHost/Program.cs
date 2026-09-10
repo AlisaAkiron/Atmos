@@ -8,7 +8,6 @@ builder.AddAtmosAppHost();
 #region Parameters
 
 var postgresPassword = builder.AddParameter("postgres-password", "atmos", secret: true);
-var redisPassword = builder.AddParameter("redis-password", "atmos", secret: true);
 
 // "Local" (default) keeps the dev loop container-free; "S3" starts RustFS and
 // points the API at it, which is the only local way to exercise the R2 code path.
@@ -30,16 +29,6 @@ var postgres = builder
     .WithHostPort(15432)
     .AddDatabase("psql-db", "atmos");
 
-var redis = builder
-    .AddRedis("redis", password: redisPassword)
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WithOtlpExporter()
-    .WithImageTag("8.4.0-alpine")
-    .WithImagePullPolicy(ImagePullPolicy.Missing)
-    .WithDataVolume("atmos-redis-data")
-    .WithHostPort(16379)
-    .WithPersistence(TimeSpan.FromMinutes(5), 100);
-
 var mailpit = builder
     .AddMailPit("mailpit")
     .WithLifetime(ContainerLifetime.Persistent)
@@ -57,7 +46,6 @@ var migrator = builder.AddProject<Atmos_Worker_Migrator>("worker-migrator")
 var api = builder
     .AddProject<Atmos_Api>("api")
     .WithReference(postgres, "PostgreSQL")
-    .WithReference(redis, "Redis")
     .WithReference(mailpit, "Smtp")
     .WithEnvironment("Media__Provider", useS3Media ? "S3" : "Local")
     .WaitForCompletion(migrator);
