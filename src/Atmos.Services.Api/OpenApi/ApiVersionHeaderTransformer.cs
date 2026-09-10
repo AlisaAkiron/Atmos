@@ -9,6 +9,12 @@ public class ApiVersionHeaderTransformer : IOpenApiOperationTransformer
     {
         operation.Parameters ??= [];
 
+        // The versioned API explorer may already describe the header
+        if (operation.Parameters.Any(p => p.Name == "X-Atmos-Api-Version"))
+        {
+            return Task.CompletedTask;
+        }
+
         operation.Parameters.Add(new OpenApiParameter
         {
             Name = "X-Atmos-Api-Version",

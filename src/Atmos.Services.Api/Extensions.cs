@@ -35,15 +35,17 @@ public static class Extensions
         var svcName = builder.Configuration.GetOtelServiceName();
 
         builder.Services.AddProblemDetails();
-        builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddApiVersioning(options =>
         {
             options.DefaultApiVersion = new ApiVersion(1);
             options.ReportApiVersions = true;
+            // Clients may omit X-Atmos-Api-Version and get the default version
+#pragma warning disable AV0016
             options.AssumeDefaultVersionWhenUnspecified = true;
+#pragma warning restore AV0016
             options.ApiVersionReader = new HeaderApiVersionReader("X-Atmos-Api-Version");
             options.UnsupportedApiVersionStatusCode = StatusCodes.Status400BadRequest;
-        });
+        }).AddApiExplorer();
 
         builder.AddAtmosCors();
         builder.AddAtmosRateLimiting();
