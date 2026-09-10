@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
-        <NoWarn>$(NoWarn);RMG020</NoWarn>
+        <NoWarn>$(NoWarn);RMG020;NU1900</NoWarn>
     </PropertyGroup>
 
     <!-- Documentation -->
