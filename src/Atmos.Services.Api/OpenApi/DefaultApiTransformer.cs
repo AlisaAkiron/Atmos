@@ -5,31 +5,6 @@ namespace Atmos.Services.Api.OpenApi;
 
 public class DefaultApiTransformer : IOpenApiDocumentTransformer
 {
-    /// <summary>
-    /// Blurb for each tag the endpoint groups declare through WithTags.
-    /// </summary>
-    private static readonly Dictionary<string, string> TagDescriptions = new()
-    {
-        ["Authentication"] =
-            "Signing in and out, discovering the configured identity providers, WebAuthn ceremonies, "
-            + "and inspecting or revoking what can reach the caller's own account.",
-        ["SocialLinks"] = "The site owner's profile links, as shown to visitors.",
-        ["SocialLinks Admin"] = "Site-owner management of profile links.",
-        ["FriendLinks"] = "Reciprocal links to other sites, as shown to visitors.",
-        ["FriendLinks Admin"] = "Site-owner management of friend links.",
-        ["Taxonomy"] = "Categories and tags that published content is filed under.",
-        ["Taxonomy Admin"] = "Site-owner management of categories and tags.",
-        ["Articles"] = "Published articles, newest first.",
-        ["Articles Admin"] = "Site-owner authoring: drafts, edits, publishing and unpublishing.",
-        ["Pages"] = "Published standalone pages, addressed by slug rather than listed.",
-        ["Pages Admin"] = "Site-owner authoring of standalone pages.",
-        ["Media Admin"] =
-            "Site-owner upload and management of media. Delivery is public and served from the media "
-            + "route directly, so it is not part of this document.",
-        ["Debug"] = "Development-only diagnostics. These are not mapped in production.",
-        ["Status"] = "Liveness and readiness probes. Unversioned, and outside the /api prefix."
-    };
-
     public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
     {
         document.Info ??= new OpenApiInfo();
@@ -69,16 +44,6 @@ public class DefaultApiTransformer : IOpenApiDocumentTransformer
         {
             Name = "Status"
         });
-
-        // Every other tag is created from WithTags as operations are collected, so the
-        // descriptions have to be attached to the tag objects already in the document
-        foreach (var tag in document.Tags)
-        {
-            if (tag.Name is not null && TagDescriptions.TryGetValue(tag.Name, out var description))
-            {
-                tag.Description = description;
-            }
-        }
 
         var tagRef = new HashSet<OpenApiTagReference>
         {

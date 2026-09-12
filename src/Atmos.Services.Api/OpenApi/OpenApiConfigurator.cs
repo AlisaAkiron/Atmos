@@ -30,6 +30,8 @@ public static class OpenApiConfigurator
         options.ShouldInclude = _ => true;
 
         options.AddDocumentTransformer<DefaultApiTransformer>();
+        // After DefaultApiTransformer: it creates the Status tag this one then groups
+        options.AddDocumentTransformer<TagGroupTransformer>();
         options.AddDocumentTransformer<AuthenticationTransformer>();
         options.AddOperationTransformer<ApiVersionHeaderTransformer>();
         options.AddOperationTransformer<AuthenticationTransformer>();
