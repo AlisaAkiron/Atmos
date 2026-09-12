@@ -18,7 +18,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 
 namespace Atmos.Services.Api;
@@ -51,12 +50,7 @@ public static class Extensions
         builder.AddAtmosRateLimiting();
         builder.ConfigureContentCaching();
 
-        builder.Services.AddOpenApi(svcName, options =>
-        {
-            options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
-            options.AddDocumentTransformer<DefaultApiTransformer>();
-            options.AddOperationTransformer<ApiVersionHeaderTransformer>();
-        });
+        builder.Services.AddOpenApi(svcName, OpenApiConfigurator.ConfigureDocument);
 
         builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 
