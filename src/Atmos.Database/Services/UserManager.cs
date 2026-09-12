@@ -168,6 +168,44 @@ public class UserManager : IUserManager
         }
     }
 
+    public async Task<bool> RemoveWebAuthnAsync(User user, byte[] credentialId, bool noSave = false)
+    {
+        var device = user.WebAuthnDevices.FirstOrDefault(x => x.CredentialId.SequenceEqual(credentialId));
+        if (device is null)
+        {
+            return false;
+        }
+
+        user.WebAuthnDevices.Remove(device);
+        _dbContext.WebAuthn.Remove(device);
+
+        if (noSave is false)
+        {
+            await _dbContext.SaveChangesAsync();
+        }
+
+        return true;
+    }
+
+    public async Task<bool> RemoveSocialLoginAsync(User user, Guid connectionId, bool noSave = false)
+    {
+        var login = user.SocialLogins.FirstOrDefault(x => x.ConnectionId == connectionId);
+        if (login is null)
+        {
+            return false;
+        }
+
+        user.SocialLogins.Remove(login);
+        _dbContext.SocialLogins.Remove(login);
+
+        if (noSave is false)
+        {
+            await _dbContext.SaveChangesAsync();
+        }
+
+        return true;
+    }
+
     private async Task EnsureEmailIsFreeAsync(string email)
     {
         var existing = await GetUserByEmailAsync(email);

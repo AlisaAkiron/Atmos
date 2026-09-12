@@ -2,9 +2,7 @@ using System.ComponentModel;
 using System.Text;
 using Atmos.Api.Endpoints.Dto;
 using Atmos.Common.Abstract;
-using Atmos.Common.Utils;
 using Atmos.Domain.Abstract;
-using Atmos.Domain.Entities.Identity;
 using Atmos.Services.Api;
 using Atmos.Services.Api.Abstract;
 using Fido2NetLib;
@@ -20,51 +18,46 @@ public partial class AuthenticationEndpoints
 {
     private static readonly TimeSpan WebAuthnChallengeLifetime = TimeSpan.FromMinutes(5);
 
-    [EndpointSummary("WebAuthn registration")]
-    private static async Task<Ok<WebAuthnAttestationDto>> AttestationAsync(
+    [EndpointSummary("Register a WebAuthn credential for the signed-in account")]
+    private static async Task<Results<Ok<WebAuthnAttestationDto>, UnauthorizedHttpResult>> AttestationAsync(
         [FromServices] IFido2 fido2,
         [FromServices] ICurrentUser currentUser,
         [FromServices] IDistributedCache distributedCache,
         [FromServices] IGuidProvider guidProvider)
     {
-        User? user = null;
-        if (currentUser.IsAuthenticated)
-        {
-            user = await currentUser.GetUserAsync(true);
-        }
-
-        Guid userId;
-        bool creatingUser;
-        var existingCredentials = new List<PublicKeyCredentialDescriptor>();
-        var fido2User = new Fido2User();
-
+        // WebAuthn adds a credential to an account that already exists; accounts are
+        // only ever created by an external identity provider. The route requires
+        // authorization, so a missing row here means the account went away mid-session.
+        var user = await currentUser.GetUserAsync(true);
         if (user is null)
         {
-            userId = guidProvider.Create();
-            creatingUser = true;
-
-            fido2User.Name = userId.ToString();
-            fido2User.DisplayName = RandomUtils.GetRandomAlphabetString(6);
-            fido2User.Id = Encoding.UTF8.GetBytes(userId.ToString());
+            return TypedResults.Unauthorized();
         }
-        else
+
+        var existingCredentials = user.WebAuthnDevices
+            .Select(x => new PublicKeyCredentialDescriptor(x.CredentialId))
+            .ToList();
+
+        var fido2User = new Fido2User
         {
-            userId = user.UserId;
-            creatingUser = false;
-            existingCredentials = user.WebAuthnDevices
-                .Select(x => new PublicKeyCredentialDescriptor(x.CredentialId))
-                .ToList();
-
-            fido2User.Name = user.UserId.ToString();
-            fido2User.DisplayName = user.Nickname;
-            fido2User.Id = Encoding.UTF8.GetBytes(user.UserId.ToString());
-        }
+            Name = user.UserId.ToString(),
+            DisplayName = user.Nickname,
+            Id = Encoding.UTF8.GetBytes(user.UserId.ToString())
+        };
 
         var options = fido2.RequestNewCredential(new RequestNewCredentialParams
         {
             User = fido2User,
             ExcludeCredentials = existingCredentials,
-            AuthenticatorSelection = AuthenticatorSelection.Default,
+            // Sign-in asks for an assertion with no credential hint and demands user
+            // verification, so the credential has to be discoverable and UV-capable.
+            // AuthenticatorSelection.Default discourages both, which would register
+            // credentials that can never complete a sign-in.
+            AuthenticatorSelection = new AuthenticatorSelection
+            {
+                ResidentKey = ResidentKeyRequirement.Required,
+                UserVerification = UserVerificationRequirement.Required
+            },
             AttestationPreference = AttestationConveyancePreference.None,
             Extensions = new AuthenticationExtensionsClientInputs
             {
@@ -82,25 +75,28 @@ public partial class AuthenticationEndpoints
 
         return TypedResults.Ok(new WebAuthnAttestationDto
         {
-            UserId = userId,
+            UserId = user.UserId,
             DisplayName = fido2User.DisplayName,
-            IsCreatingNewUser = creatingUser,
             AttestationId = attestationId,
             Options = options
         });
     }
 
-    [EndpointSummary("WebAuthn registration verification")]
-    private static async Task<Results<SignInHttpResult, NoContent, BadRequest<string>>> AttestationVerifyAsync(
+    [EndpointSummary("Verify and store a WebAuthn credential")]
+    private static async Task<Results<NoContent, UnauthorizedHttpResult, BadRequest<string>>> AttestationVerifyAsync(
         [FromRoute(Name = "attestationId"), Description("Attestation ID")] Guid attestationId,
-        [FromQuery(Name = "sign_in"), Description("Set to true to return SignIn result")] bool signIn,
         [FromBody] WebAuthnAttestationVerifyDto dto,
         [FromServices] IFido2 fido2,
         [FromServices] IDistributedCache distributedCache,
         [FromServices] ICurrentUser currentUser,
-        [FromServices] IUserManager userManager,
-        [FromServices] IUserAccountService userAccountService)
+        [FromServices] IUserManager userManager)
     {
+        var user = await currentUser.GetUserAsync(true);
+        if (user is null)
+        {
+            return TypedResults.Unauthorized();
+        }
+
         // Find the attestation
         var cacheKey = GetAttestationChallengeCacheKey(attestationId);
         var options = await distributedCache.GetStringAsync(cacheKey);
@@ -117,6 +113,13 @@ public partial class AuthenticationEndpoints
         // Build CredentialCreateOptions
         var credentialCreateOptions = CredentialCreateOptions.FromJson(options);
 
+        // The challenge was issued to whoever was signed in at the time; refuse it for
+        // anyone else so a captured attestation cannot plant a credential on another account
+        if (string.Equals(credentialCreateOptions.User.Name, user.UserId.ToString(), StringComparison.Ordinal) is false)
+        {
+            return TypedResults.BadRequest("Invalid attestation ID");
+        }
+
         try
         {
             // Verify and make the credentials
@@ -131,18 +134,9 @@ public partial class AuthenticationEndpoints
                 }
             });
 
-            // Save the credential
-            var user = await currentUser.GetUserAsync() ??
-                       await userManager.CreateUserAsync(Guid.Parse(credential.User.Name), credential.User.DisplayName, [], true);
             await userManager.AddWebAuthnAsync(user,
                 credential.Id, credential.PublicKey, credential.User.Id,
                 credential.Type.ToString(), credential.AaGuid, credential.SignCount);
-
-            if (signIn)
-            {
-                var principal = userAccountService.CreatePrincipal(user, "webauthn");
-                return TypedResults.SignIn(principal, new AuthenticationProperties(), AtmosAuthenticationDefaults.Scheme);
-            }
 
             return TypedResults.NoContent();
         }

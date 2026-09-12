@@ -11,9 +11,6 @@ public record WebAuthnAttestationDto
     [JsonPropertyName("display_name")]
     public string DisplayName { get; set; } = string.Empty;
 
-    [JsonPropertyName("is_creating_new_user")]
-    public bool IsCreatingNewUser { get; set; }
-
     [JsonPropertyName("attestation_id")]
     public Guid AttestationId { get; set; }
 

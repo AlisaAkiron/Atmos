@@ -6,6 +6,9 @@ Serilog:
     Default: Debug
 
 Authentication:
+  # The site owner role has no configuration. Sign in once to provision the
+  # account, then set user.is_site_owner = true on that row directly in the
+  # database; the role claim is issued from it on the account's next sign-in.
   OpenIdConnect:
     - Name: my-idp
       DisplayName: My Identity Provider

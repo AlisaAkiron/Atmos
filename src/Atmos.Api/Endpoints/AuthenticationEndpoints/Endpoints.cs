@@ -33,11 +33,17 @@ public partial class AuthenticationEndpoints : IEndpointMapper
             var webAuthnGroup = authGroup.MapGroup("/webauthn")
                 .RequireRateLimiting(AtmosAuthenticationDefaults.RateLimitPolicy);
 
-            webAuthnGroup.MapPost("/attestation", AttestationAsync);
-            webAuthnGroup.MapPost("/attestation/{attestationId:guid}", AttestationVerifyAsync);
+            // Assertion is a sign-in method, so it is reachable anonymously
             webAuthnGroup.MapPost("/assertion", AssertionAsync);
             webAuthnGroup.MapPost("/assertion/{challengeId:guid}", AssertionVerifyAsync);
+
+            // Attestation only ever adds a credential to an account that already
+            // exists, so it requires a session rather than creating one
+            webAuthnGroup.MapPost("/attestation", AttestationAsync).RequireAuthorization();
+            webAuthnGroup.MapPost("/attestation/{attestationId:guid}", AttestationVerifyAsync).RequireAuthorization();
         }
+
+        MapAccountEndpoints(authGroup);
     }
 
     [EndpointSummary("Get authentication providers")]
