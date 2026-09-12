@@ -26,6 +26,10 @@ public partial class ArticleEndpoints : IEndpointMapper
     }
 
     [EndpointSummary("List published articles")]
+    [EndpointDescription(
+        "Returns published articles newest first, optionally narrowed to one category or tag slug. A page below 1 is " +
+        "clamped, and pageSize is clamped to the server maximum."
+    )]
     private static async Task<Ok<ArticleListResponse>> GetArticles(
         [FromServices] AtmosDbContext dbContext,
         [FromQuery(Name = "category")] string? category,
@@ -66,6 +70,10 @@ public partial class ArticleEndpoints : IEndpointMapper
     }
 
     [EndpointSummary("Get published article by slug")]
+    [EndpointDescription(
+        "Returns one published article by slug. Drafts are not reachable here, so an unpublished slug reads as " +
+        "missing."
+    )]
     private static async Task<Results<Ok<ArticleDto>, NotFound>> GetArticle(
         [FromServices] AtmosDbContext dbContext,
         [FromRoute] string slug,

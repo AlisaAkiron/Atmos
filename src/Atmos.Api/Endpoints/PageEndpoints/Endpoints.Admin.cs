@@ -33,6 +33,7 @@ public partial class PageEndpoints
     }
 
     [EndpointSummary("List pages (admin)")]
+    [EndpointDescription("Returns every page, draft and published alike.")]
     private static async Task<Ok<List<PageAdminDto>>> GetPagesAdmin(
         [FromServices] AtmosDbContext dbContext,
         CancellationToken ct)
@@ -46,6 +47,7 @@ public partial class PageEndpoints
     }
 
     [EndpointSummary("Get page (admin)")]
+    [EndpointDescription("Returns one page by ID, including its body and its draft state.")]
     private static async Task<Results<Ok<PageAdminDto>, NotFound>> GetPageAdmin(
         [FromServices] AtmosDbContext dbContext,
         [FromRoute] Guid id,
@@ -60,6 +62,7 @@ public partial class PageEndpoints
     }
 
     [EndpointSummary("Create page")]
+    [EndpointDescription("Creates a page as a draft. The slug must be well formed and not already taken.")]
     private static async Task<Results<Created<PageAdminDto>, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> CreatePage(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaReferenceService referenceService,
@@ -96,6 +99,9 @@ public partial class PageEndpoints
     }
 
     [EndpointSummary("Update page")]
+    [EndpointDescription(
+        "Replaces a page's content. The same slug rules as creation apply; publication state is left untouched."
+    )]
     private static async Task<Results<Ok<PageAdminDto>, NotFound, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> UpdatePage(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaReferenceService referenceService,
@@ -133,6 +139,7 @@ public partial class PageEndpoints
     }
 
     [EndpointSummary("Delete page")]
+    [EndpointDescription("Deletes a page outright. Media it referenced is released, not deleted.")]
     private static async Task<Results<NoContent, NotFound>> DeletePage(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaReferenceService referenceService,
@@ -155,6 +162,7 @@ public partial class PageEndpoints
     }
 
     [EndpointSummary("Publish page")]
+    [EndpointDescription("Publishes a draft page, stamping its publication time.")]
     private static async Task<Results<Ok<PageAdminDto>, NotFound>> PublishPage(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] TimeProvider timeProvider,
@@ -178,6 +186,7 @@ public partial class PageEndpoints
     }
 
     [EndpointSummary("Unpublish page")]
+    [EndpointDescription("Returns a page to draft, clearing its publication time and taking it off the public route.")]
     private static async Task<Results<Ok<PageAdminDto>, NotFound>> UnpublishPage(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] IOutputCacheStore cacheStore,

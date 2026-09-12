@@ -25,6 +25,10 @@ public partial class AuthenticationEndpoints
     }
 
     [EndpointSummary("Get the signed-in account")]
+    [EndpointDescription(
+        "Describes the account behind the current session: its nickname, known email addresses, whether it holds the " +
+        "site owner role, and which method signed it in."
+    )]
     private static async Task<Results<Ok<AccountDto>, UnauthorizedHttpResult>> GetAccountAsync(
         [FromServices] ICurrentUser currentUser)
     {
@@ -46,6 +50,10 @@ public partial class AuthenticationEndpoints
     }
 
     [EndpointSummary("List credentials that can reach the account")]
+    [EndpointDescription(
+        "Lists everything that can currently authenticate as this account, linked external logins and registered " +
+        "WebAuthn credentials alike, so a lost authenticator can be found and revoked."
+    )]
     private static async Task<Results<Ok<AccountCredentialsDto>, UnauthorizedHttpResult>> GetCredentialsAsync(
         [FromServices] ICurrentUser currentUser)
     {
@@ -79,6 +87,10 @@ public partial class AuthenticationEndpoints
     }
 
     [EndpointSummary("Unlink an external login")]
+    [EndpointDescription(
+        "Unlinks one external login. Registration is external-only, so removing the last remaining login is refused " +
+        "with 409 rather than leaving the account with no way back in."
+    )]
     private static async Task<Results<NoContent, NotFound, Conflict<ErrorResponse>, UnauthorizedHttpResult>> RemoveSocialLoginAsync(
         [FromRoute(Name = "connectionId")] Guid connectionId,
         [FromServices] ICurrentUser currentUser,
@@ -107,6 +119,10 @@ public partial class AuthenticationEndpoints
     }
 
     [EndpointSummary("Remove a WebAuthn credential")]
+    [EndpointDescription(
+        "Revokes one registered WebAuthn credential. Removal is scoped to the caller's own credentials, so an ID " +
+        "belonging to another account is reported as missing rather than removed."
+    )]
     private static async Task<Results<NoContent, NotFound, BadRequest<ErrorResponse>, UnauthorizedHttpResult>> RemoveWebAuthnCredentialAsync(
         [FromRoute(Name = "credentialId")] string credentialId,
         [FromServices] ICurrentUser currentUser,

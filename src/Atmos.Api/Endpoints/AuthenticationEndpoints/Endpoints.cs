@@ -47,6 +47,10 @@ public partial class AuthenticationEndpoints : IEndpointMapper
     }
 
     [EndpointSummary("Get authentication providers")]
+    [EndpointDescription(
+        "Lists the identity providers this deployment has configured, plus WebAuthn when it is enabled. The returned " +
+        "names are what the login route accepts as its provider segment."
+    )]
     private static Ok<List<AuthenticationProviderDto>> GetProviders(
         [FromServices] IOptions<AuthenticationOptions> authenticationOptions)
     {
@@ -56,6 +60,11 @@ public partial class AuthenticationEndpoints : IEndpointMapper
     }
 
     [EndpointSummary("Initiate authentication")]
+    [EndpointDescription(
+        "Starts a sign-in by challenging the named external provider. Only OAuth and OpenID Connect providers can be " +
+        "initiated here; return_url must be a local path, and the browser lands back on it once the session cookie is " +
+        "set."
+    )]
     private static Results<ChallengeHttpResult, NotFound, BadRequest<string>> InitiateAuthentication(
         [FromServices] IOptions<AuthenticationOptions> authenticationOptions,
         [FromRoute(Name = "provider")] string provider,
@@ -92,6 +101,7 @@ public partial class AuthenticationEndpoints : IEndpointMapper
     }
 
     [EndpointSummary("Sign out")]
+    [EndpointDescription("Clears the session cookie. Succeeds whether or not a session was present.")]
     private static SignOutHttpResult Logout()
     {
         return TypedResults.SignOut(new AuthenticationProperties(), [AtmosAuthenticationDefaults.Scheme]);

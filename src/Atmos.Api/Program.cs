@@ -1,5 +1,6 @@
 using Atmos.Api.Endpoints;
 using Atmos.Services.Api;
+using Atmos.Services.Api.OpenApi;
 using Atmos.Services.Default;
 using Microsoft.IdentityModel.Logging;
 
@@ -7,6 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddAtmosDefaultServices();
 builder.AddAtmosApiServices();
+
+// Registered here rather than inside AddAtmosApiServices: the XML comment support in
+// Microsoft.AspNetCore.OpenApi is a source generator that intercepts this call site and
+// reads comments from its own compilation, which is where the endpoints and DTOs live.
+builder.Services.AddOpenApi(
+    OpenApiConfigurator.DocumentName(builder.Configuration),
+    OpenApiConfigurator.ConfigureDocument);
 
 var app = builder.Build();
 

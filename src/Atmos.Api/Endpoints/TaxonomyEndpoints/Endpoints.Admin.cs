@@ -38,6 +38,7 @@ public partial class TaxonomyEndpoints
     }
 
     [EndpointSummary("List categories (admin)")]
+    [EndpointDescription("Returns every category with its ID, which is what the update and delete routes address.")]
     private static async Task<Ok<List<CategoryAdminDto>>> GetCategoriesAdmin(
         [FromServices] AtmosDbContext dbContext,
         CancellationToken ct)
@@ -51,6 +52,7 @@ public partial class TaxonomyEndpoints
     }
 
     [EndpointSummary("List tags (admin)")]
+    [EndpointDescription("Returns every tag with its ID, which is what the update and delete routes address.")]
     private static async Task<Ok<List<TagAdminDto>>> GetTagsAdmin(
         [FromServices] AtmosDbContext dbContext,
         CancellationToken ct)
@@ -64,6 +66,7 @@ public partial class TaxonomyEndpoints
     }
 
     [EndpointSummary("Create category")]
+    [EndpointDescription("Creates a category. The slug must be well formed and not already taken.")]
     private static async Task<Results<Created<CategoryAdminDto>, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> CreateCategory(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] IGuidProvider guidProvider,
@@ -99,6 +102,7 @@ public partial class TaxonomyEndpoints
     }
 
     [EndpointSummary("Update category")]
+    [EndpointDescription("Renames a category or changes its slug. The new slug must be well formed and free.")]
     private static async Task<Results<Ok<CategoryAdminDto>, NotFound, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> UpdateCategory(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] IOutputCacheStore cacheStore,
@@ -136,6 +140,7 @@ public partial class TaxonomyEndpoints
     }
 
     [EndpointSummary("Delete category")]
+    [EndpointDescription("Deletes a category. Articles filed under it survive and become uncategorised.")]
     private static async Task<Results<NoContent, NotFound>> DeleteCategory(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] IOutputCacheStore cacheStore,
@@ -158,6 +163,7 @@ public partial class TaxonomyEndpoints
     }
 
     [EndpointSummary("Create tag")]
+    [EndpointDescription("Creates a tag. The slug must be well formed and not already taken.")]
     private static async Task<Results<Created<TagAdminDto>, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> CreateTag(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] IGuidProvider guidProvider,
@@ -191,6 +197,7 @@ public partial class TaxonomyEndpoints
     }
 
     [EndpointSummary("Update tag")]
+    [EndpointDescription("Renames a tag or changes its slug. The new slug must be well formed and free.")]
     private static async Task<Results<Ok<TagAdminDto>, NotFound, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> UpdateTag(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] IOutputCacheStore cacheStore,
@@ -231,6 +238,7 @@ public partial class TaxonomyEndpoints
     }
 
     [EndpointSummary("Delete tag")]
+    [EndpointDescription("Deletes a tag and detaches it from every article. The articles themselves are untouched.")]
     private static async Task<Results<NoContent, NotFound>> DeleteTag(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] IOutputCacheStore cacheStore,

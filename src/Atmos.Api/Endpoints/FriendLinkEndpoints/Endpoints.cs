@@ -23,6 +23,9 @@ public partial class FriendLinkEndpoints : IEndpointMapper
     }
 
     [EndpointSummary("List friend links")]
+    [EndpointDescription(
+        "Returns reciprocal links in display order, with avatar URLs already resolved for direct use."
+    )]
     private static async Task<Ok<List<FriendLinkDto>>> GetFriendLinks(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaUrlBuilder urlBuilder,

@@ -19,6 +19,11 @@ public partial class AuthenticationEndpoints
     private static readonly TimeSpan WebAuthnChallengeLifetime = TimeSpan.FromMinutes(5);
 
     [EndpointSummary("Register a WebAuthn credential for the signed-in account")]
+    [EndpointDescription(
+        "Begins registering an authenticator for the signed-in account. Returns the options to hand to " +
+        "navigator.credentials.create together with the attestation ID identifying the ceremony; both expire after " +
+        "five minutes."
+    )]
     private static async Task<Results<Ok<WebAuthnAttestationDto>, UnauthorizedHttpResult>> AttestationAsync(
         [FromServices] IFido2 fido2,
         [FromServices] ICurrentUser currentUser,
@@ -83,6 +88,10 @@ public partial class AuthenticationEndpoints
     }
 
     [EndpointSummary("Verify and store a WebAuthn credential")]
+    [EndpointDescription(
+        "Completes registration by verifying the authenticator's response and storing the credential. The challenge " +
+        "is single-use, and is only accepted from the account it was issued to."
+    )]
     private static async Task<Results<NoContent, UnauthorizedHttpResult, BadRequest<string>>> AttestationVerifyAsync(
         [FromRoute(Name = "attestationId"), Description("Attestation ID")] Guid attestationId,
         [FromBody] WebAuthnAttestationVerifyDto dto,
@@ -147,6 +156,11 @@ public partial class AuthenticationEndpoints
     }
 
     [EndpointSummary("WebAuthn assertion")]
+    [EndpointDescription(
+        "Begins a WebAuthn sign-in. Returns the options to hand to navigator.credentials.get and the challenge ID " +
+        "identifying the ceremony. No credential hint is sent, so the authenticator offers its own discoverable " +
+        "credentials."
+    )]
     private static async Task<Ok<WebAuthnAssertionDto>> AssertionAsync(
         [FromServices] IFido2 fido2,
         [FromServices] IDistributedCache distributedCache,
@@ -176,6 +190,10 @@ public partial class AuthenticationEndpoints
     }
 
     [EndpointSummary("WebAuthn assertion verification")]
+    [EndpointDescription(
+        "Completes a WebAuthn sign-in by verifying the authenticator's response, issuing the session cookie on " +
+        "success. The challenge is single-use."
+    )]
     private static async Task<Results<SignInHttpResult, BadRequest<string>>> AssertionVerifyAsync(
         [FromRoute(Name = "challengeId")] Guid challengeId,
         [FromBody] WebAuthnAssertionVerifyDto dto,

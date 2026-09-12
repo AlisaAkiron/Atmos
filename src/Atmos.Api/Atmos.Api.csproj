@@ -5,6 +5,14 @@
     </ItemGroup>
 
     <ItemGroup>
+      <!-- Referenced for its source generator, which turns the XML comments on the
+           endpoints and DTOs in this project into OpenAPI summaries and schema
+           descriptions. Analyzers do not flow through a ProjectReference, so relying
+           on Atmos.Services.Api's reference leaves this project's comments unread. -->
+      <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    </ItemGroup>
+
+    <ItemGroup>
       <None Update="appsettings*.yaml">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>

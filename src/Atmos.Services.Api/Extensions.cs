@@ -31,8 +31,6 @@ public static class Extensions
         builder.ConfigureIdentity();
         builder.AddAtmosMediaServices();
 
-        var svcName = builder.Configuration.GetOtelServiceName();
-
         builder.Services.AddProblemDetails();
         builder.Services.AddApiVersioning(options =>
         {
@@ -49,8 +47,6 @@ public static class Extensions
         builder.AddAtmosCors();
         builder.AddAtmosRateLimiting();
         builder.ConfigureContentCaching();
-
-        builder.Services.AddOpenApi(svcName, OpenApiConfigurator.ConfigureDocument);
 
         builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 
@@ -118,8 +114,8 @@ public static class Extensions
             app.MapOpenApi();
             app.MapScalarApiReference();
 
-            var svcName = app.Configuration.GetOtelServiceName();
-            api.MapGet("/", () => TypedResults.Redirect($"/scalar/{svcName}"))
+            var documentName = OpenApiConfigurator.DocumentName(app.Configuration);
+            api.MapGet("/", () => TypedResults.Redirect($"/scalar/{documentName}"))
                 .HasApiVersion(1)
                 .ExcludeFromDescription();
         }
@@ -187,10 +183,5 @@ public static class Extensions
         });
 
         return builder;
-    }
-
-    private static string GetOtelServiceName(this IConfiguration configuration)
-    {
-        return configuration["OTEL_SERVICE_NAME"] ?? "Unknown";
     }
 }

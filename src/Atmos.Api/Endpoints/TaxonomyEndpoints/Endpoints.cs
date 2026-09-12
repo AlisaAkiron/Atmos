@@ -28,6 +28,7 @@ public partial class TaxonomyEndpoints : IEndpointMapper
     }
 
     [EndpointSummary("List categories")]
+    [EndpointDescription("Returns every category defined on the site, for filtering article listings.")]
     private static async Task<Ok<List<CategoryDto>>> GetCategories(
         [FromServices] AtmosDbContext dbContext,
         CancellationToken ct)
@@ -42,6 +43,7 @@ public partial class TaxonomyEndpoints : IEndpointMapper
     }
 
     [EndpointSummary("List tags")]
+    [EndpointDescription("Returns every tag defined on the site, for filtering article listings.")]
     private static async Task<Ok<List<TagDto>>> GetTags(
         [FromServices] AtmosDbContext dbContext,
         CancellationToken ct)

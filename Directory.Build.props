@@ -9,8 +9,10 @@
         <NoWarn>$(NoWarn);RMG020;NU1900</NoWarn>
     </PropertyGroup>
 
-    <!-- Documentation -->
-    <PropertyGroup Condition="$(Configuration) == 'Debug'">
+    <!-- Documentation: unconditional because Microsoft.AspNetCore.OpenApi turns XML
+         comments into OpenAPI summaries and schema descriptions. Restricting it to
+         Debug would strip every description from a document built any other way. -->
+    <PropertyGroup>
         <NoWarn>$(NoWarn);CS1591</NoWarn>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>

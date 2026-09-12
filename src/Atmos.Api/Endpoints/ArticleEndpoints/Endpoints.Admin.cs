@@ -33,6 +33,7 @@ public partial class ArticleEndpoints
     }
 
     [EndpointSummary("List articles (admin)")]
+    [EndpointDescription("Returns every article, draft and published alike, newest first.")]
     private static async Task<Ok<ArticleAdminListResponse>> GetArticlesAdmin(
         [FromServices] AtmosDbContext dbContext,
         [FromQuery(Name = "page")] int page = 1,
@@ -59,6 +60,7 @@ public partial class ArticleEndpoints
     }
 
     [EndpointSummary("Get article (admin)")]
+    [EndpointDescription("Returns one article by ID, including its body and its draft state.")]
     private static async Task<Results<Ok<ArticleAdminDto>, NotFound>> GetArticleAdmin(
         [FromServices] AtmosDbContext dbContext,
         [FromRoute] Guid id,
@@ -73,6 +75,10 @@ public partial class ArticleEndpoints
     }
 
     [EndpointSummary("Create article")]
+    [EndpointDescription(
+        "Creates an article as a draft. The slug must be well formed and not already taken, and every category or tag " +
+        "slug named in the request must already exist."
+    )]
     private static async Task<Results<Created<ArticleAdminDto>, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> CreateArticle(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaReferenceService referenceService,
@@ -119,6 +125,10 @@ public partial class ArticleEndpoints
     }
 
     [EndpointSummary("Update article")]
+    [EndpointDescription(
+        "Replaces an article's content and taxonomy. The same slug and taxonomy rules as creation apply; publication " +
+        "state is left untouched."
+    )]
     private static async Task<Results<Ok<ArticleAdminDto>, NotFound, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> UpdateArticle(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaReferenceService referenceService,
@@ -172,6 +182,7 @@ public partial class ArticleEndpoints
     }
 
     [EndpointSummary("Delete article")]
+    [EndpointDescription("Deletes an article outright. Media it referenced is released, not deleted.")]
     private static async Task<Results<NoContent, NotFound>> DeleteArticle(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaReferenceService referenceService,
@@ -194,6 +205,10 @@ public partial class ArticleEndpoints
     }
 
     [EndpointSummary("Publish article")]
+    [EndpointDescription(
+        "Publishes a draft, stamping its publication time. An article that is already published keeps its original " +
+        "time."
+    )]
     private static async Task<Results<Ok<ArticleAdminDto>, NotFound>> PublishArticle(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] TimeProvider timeProvider,
@@ -221,6 +236,9 @@ public partial class ArticleEndpoints
     }
 
     [EndpointSummary("Unpublish article")]
+    [EndpointDescription(
+        "Returns an article to draft, clearing its publication time and taking it off the public routes."
+    )]
     private static async Task<Results<Ok<ArticleAdminDto>, NotFound>> UnpublishArticle(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] IOutputCacheStore cacheStore,

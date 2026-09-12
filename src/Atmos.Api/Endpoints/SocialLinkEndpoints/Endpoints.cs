@@ -23,6 +23,9 @@ public partial class SocialLinkEndpoints : IEndpointMapper
     }
 
     [EndpointSummary("List social links")]
+    [EndpointDescription(
+        "Returns the site owner's profile links in display order, with icon URLs already resolved for direct use."
+    )]
     private static async Task<Ok<List<SocialLinkDto>>> GetSocialLinks(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaUrlBuilder urlBuilder,

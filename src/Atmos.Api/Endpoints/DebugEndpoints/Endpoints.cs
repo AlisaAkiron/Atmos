@@ -18,6 +18,11 @@ public class DebugEndpoints : IEndpointMapper
         debugGroup.MapGet("/auth/userinfo", GetDebugUserInfo);
     }
 
+    [EndpointSummary("Dump the caller's identities and claims")]
+    [EndpointDescription(
+        "Renders every identity on the current principal with its claims, followed by the email, name and subject " +
+        "Atmos maps out of them. A development aid for diagnosing provider claim mapping; not mapped in production."
+    )]
     private static Ok<string> GetDebugUserInfo(
         [FromServices] IHttpContextAccessor httpContextAccessor)
     {

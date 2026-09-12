@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace Atmos.Services.Api.Models;
 
+/// <summary>
+/// The body every Atmos failure answers with, whatever the status code.
+/// </summary>
 public record ErrorResponse
 {
     public ErrorResponse(string message)
@@ -10,6 +13,10 @@ public record ErrorResponse
         Message = message;
     }
 
+    /// <summary>
+    /// What went wrong. Outside production this may carry exception detail; in production it
+    /// stays generic.
+    /// </summary>
     [JsonPropertyName("message")]
     public string Message { get; set; } = string.Empty;
 

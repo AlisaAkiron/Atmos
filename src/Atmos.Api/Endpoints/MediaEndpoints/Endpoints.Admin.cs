@@ -50,6 +50,11 @@ public partial class MediaEndpoints
     }
 
     [EndpointSummary("Upload media")]
+    [EndpointDescription(
+        "Stores a file under the given key and records it. The key must be well formed and unused. Storage is written " +
+        "before the row is created, so a storage failure leaves nothing behind and answers 502. When another entry " +
+        "already holds the same SHA-256, its key is reported back so the duplicate can be reused instead."
+    )]
     private static async Task<Results<Created<MediaUploadResponse>, BadRequest<ErrorResponse>, Conflict<ErrorResponse>, ProblemHttpResult>> UploadMedia(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] IMediaStorage storage,
@@ -118,6 +123,10 @@ public partial class MediaEndpoints
     }
 
     [EndpointSummary("List media")]
+    [EndpointDescription(
+        "Lists stored media, optionally narrowed to a key prefix or to entries nothing references yet, which is the " +
+        "view for finding orphans worth deleting."
+    )]
     private static async Task<Ok<List<MediaAdminDto>>> GetMediaList(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaUrlBuilder urlBuilder,
@@ -165,6 +174,10 @@ public partial class MediaEndpoints
     }
 
     [EndpointSummary("Delete media")]
+    [EndpointDescription(
+        "Deletes media from storage and drops its row. Media still referenced by content is refused with 409, and the " +
+        "conflict body names every referrer."
+    )]
     private static async Task<Results<NoContent, NotFound, Conflict<MediaAdminDto>, ProblemHttpResult>> DeleteMedia(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] IMediaStorage storage,

@@ -29,6 +29,7 @@ public partial class SocialLinkEndpoints
     }
 
     [EndpointSummary("List social links (admin)")]
+    [EndpointDescription("Returns profile links in display order with their IDs and the media ID behind each icon.")]
     private static async Task<Ok<List<SocialLinkAdminDto>>> GetSocialLinksAdmin(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaUrlBuilder urlBuilder,
@@ -45,6 +46,7 @@ public partial class SocialLinkEndpoints
     }
 
     [EndpointSummary("Create social link")]
+    [EndpointDescription("Creates a profile link. The icon media must already exist.")]
     private static async Task<Results<Created<SocialLinkAdminDto>, BadRequest<ErrorResponse>>> CreateSocialLink(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaUrlBuilder urlBuilder,
@@ -81,6 +83,9 @@ public partial class SocialLinkEndpoints
     }
 
     [EndpointSummary("Update social link")]
+    [EndpointDescription(
+        "Replaces a profile link's URL, label, styling, icon and position. The icon media must already exist."
+    )]
     private static async Task<Results<Ok<SocialLinkAdminDto>, NotFound, BadRequest<ErrorResponse>>> UpdateSocialLink(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaUrlBuilder urlBuilder,
@@ -117,6 +122,7 @@ public partial class SocialLinkEndpoints
     }
 
     [EndpointSummary("Delete social link")]
+    [EndpointDescription("Deletes a profile link and releases its hold on the icon media.")]
     private static async Task<Results<NoContent, NotFound>> DeleteSocialLink(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaReferenceService referenceService,

@@ -22,6 +22,9 @@ public partial class PageEndpoints : IEndpointMapper
     }
 
     [EndpointSummary("Get page by slug")]
+    [EndpointDescription(
+        "Returns one published page by slug. Pages are addressed individually and are never listed publicly."
+    )]
     private static async Task<Results<Ok<PageDto>, NotFound>> GetPage(
         [FromServices] AtmosDbContext dbContext,
         [FromRoute] string slug,

@@ -29,6 +29,9 @@ public partial class FriendLinkEndpoints
     }
 
     [EndpointSummary("List friend links (admin)")]
+    [EndpointDescription(
+        "Returns reciprocal links in display order with their IDs and the media ID behind each avatar."
+    )]
     private static async Task<Ok<List<FriendLinkAdminDto>>> GetFriendLinksAdmin(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaUrlBuilder urlBuilder,
@@ -47,6 +50,9 @@ public partial class FriendLinkEndpoints
     }
 
     [EndpointSummary("Create friend link")]
+    [EndpointDescription(
+        "Creates a friend link. An avatar is optional, but when one is given the media must already exist."
+    )]
     private static async Task<Results<Created<FriendLinkAdminDto>, BadRequest<ErrorResponse>>> CreateFriendLink(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaUrlBuilder urlBuilder,
@@ -84,6 +90,10 @@ public partial class FriendLinkEndpoints
     }
 
     [EndpointSummary("Update friend link")]
+    [EndpointDescription(
+        "Replaces a friend link's URL, title, description, avatar and position. When an avatar is given, the media " +
+        "must already exist."
+    )]
     private static async Task<Results<Ok<FriendLinkAdminDto>, NotFound, BadRequest<ErrorResponse>>> UpdateFriendLink(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaUrlBuilder urlBuilder,
@@ -120,6 +130,7 @@ public partial class FriendLinkEndpoints
     }
 
     [EndpointSummary("Delete friend link")]
+    [EndpointDescription("Deletes a friend link and releases its hold on the avatar media.")]
     private static async Task<Results<NoContent, NotFound>> DeleteFriendLink(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaReferenceService referenceService,
