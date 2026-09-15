@@ -23,7 +23,7 @@ var postgres = builder
     .AddPostgres("postgres", password: postgresPassword)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithOtlpExporter()
-    .WithImageTag("18.3")
+    .WithImageTag("18.6")
     .WithImagePullPolicy(ImagePullPolicy.Missing)
     .WithVolume("atmos-psql-data", "/var/lib/postgresql")
     .WithHostPort(15432)
@@ -33,7 +33,7 @@ var mailpit = builder
     .AddMailPit("mailpit")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithOtlpExporter()
-    .WithImageTag("v1.28.0")
+    .WithImageTag("v1.31.1")
     .WithImagePullPolicy(ImagePullPolicy.Missing)
     .WithDataVolume("atmos-mailpit-data");
 
@@ -52,7 +52,7 @@ if (useS3Media)
 
     var rustfs = builder
         .AddContainer("rustfs", "rustfs/rustfs")
-        .WithImageTag("1.0.0-beta.12")
+        .WithImageTag("1.0.0-rc.6")
         .WithImagePullPolicy(ImagePullPolicy.Missing)
         .WithLifetime(ContainerLifetime.Persistent)
         .WithEnvironment("RUSTFS_VOLUMES", "/data")
