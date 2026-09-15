@@ -28,6 +28,7 @@ public static class Extensions
     {
         builder.ConfigureNetwork();
         builder.ConfigureNpgsql();
+        builder.ConfigureDataProtection();
         builder.ConfigureCaching();
         builder.ConfigureIdentity();
         builder.AddAtmosMediaServices();

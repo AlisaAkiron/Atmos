@@ -3,11 +3,12 @@ using Atmos.Domain.Entities.Caching;
 using Atmos.Domain.Entities.Content;
 using Atmos.Domain.Entities.Identity;
 using Atmos.Domain.Entities.MediaStorage;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Atmos.Database;
 
-public class AtmosDbContext : DbContext
+public class AtmosDbContext : DbContext, IDataProtectionKeyContext
 {
     private readonly TimeProvider _timeProvider;
 
@@ -89,6 +90,20 @@ public class AtmosDbContext : DbContext
     #region Caching
 
     public DbSet<AtmosCache> AtmosCaches => Set<AtmosCache>();
+
+    #endregion
+
+    #region Data Protection
+
+    /// <summary>
+    /// The Data Protection key ring, which encrypts the authentication cookie.
+    /// </summary>
+    /// <remarks>
+    /// Read and written by the framework rather than by Atmos code. It lives here so
+    /// the ring outlives the process and is shared by every instance; the default
+    /// stores it per-process, which signs every session out on restart.
+    /// </remarks>
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     #endregion
 }
