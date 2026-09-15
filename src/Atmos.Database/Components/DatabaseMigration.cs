@@ -1,47 +1,54 @@
 using System.Diagnostics;
-using Atmos.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
-namespace Atmos.Worker.Migrator;
+namespace Atmos.Database;
 
-public class Worker : BackgroundService
+public static class DatabaseMigration
 {
-    private readonly IHostEnvironment _hostEnvironment;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IHostApplicationLifetime _hostApplicationLifetime;
+    internal const string ActivitySourceName = "Migrations";
 
-    private const string ActivitySourceName = "Migrations";
+    private const string AutoMigrateKey = "Database:AutoMigrate";
+
     private static readonly ActivitySource ActivitySource = new(ActivitySourceName);
 
-    public Worker(
-        IHostEnvironment hostEnvironment,
-        IServiceProvider serviceProvider,
-        IHostApplicationLifetime hostApplicationLifetime)
+    /// <summary>
+    /// Creates the database if it does not exist yet and applies every pending migration.
+    /// Call this between <c>Build()</c> and <c>RunAsync()</c> so the schema is in place
+    /// before the host starts accepting requests.
+    /// </summary>
+    /// <remarks>
+    /// Does nothing when <c>Database:AutoMigrate</c> is <c>false</c>, which leaves the schema
+    /// to a separate deployment step (<c>dotnet ef database update</c> or a generated script)
+    /// running under a credential allowed to alter it.
+    /// </remarks>
+    public static async Task<IHost> MigrateAtmosDatabaseAsync(
+        this IHost host,
+        CancellationToken cancellationToken = default)
     {
-        _hostEnvironment = hostEnvironment;
-        _serviceProvider = serviceProvider;
-        _hostApplicationLifetime = hostApplicationLifetime;
-    }
+        ArgumentNullException.ThrowIfNull(host);
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
+        var configuration = host.Services.GetRequiredService<IConfiguration>();
+
+        if (configuration.GetValue(AutoMigrateKey, true) is false)
+        {
+            return host;
+        }
+
         // ReSharper disable once ExplicitCallerInfoArgument
         using var activity = ActivitySource.StartActivity("Migrating database", ActivityKind.Client);
 
         try
         {
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = host.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AtmosDbContext>();
 
-            await EnsureDatabaseAsync(dbContext, stoppingToken);
-            await RunMigrationAsync(dbContext, stoppingToken);
-
-            if (_hostEnvironment.IsDevelopment())
-            {
-                await SeedDevelopmentDataAsync(dbContext, stoppingToken);
-            }
+            await EnsureDatabaseAsync(dbContext, cancellationToken);
+            await RunMigrationAsync(dbContext, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -49,7 +56,7 @@ public class Worker : BackgroundService
             throw;
         }
 
-        _hostApplicationLifetime.StopApplication();
+        return host;
     }
 
     private static async Task EnsureDatabaseAsync(AtmosDbContext dbContext, CancellationToken cancellationToken)
@@ -91,14 +98,8 @@ public class Worker : BackgroundService
         }
 
         // MigrateAsync manages its own transactions; wrapping it in an outer transaction
-        // breaks migrations containing non-transactional operations
+        // breaks migrations containing non-transactional operations, and suppresses the
+        // database-wide lock EF takes to keep concurrent hosts from migrating at once
         await dbContext.Database.MigrateAsync(cancellationToken);
-    }
-
-    private static async Task SeedDevelopmentDataAsync(AtmosDbContext dbContext, CancellationToken cancellationToken)
-    {
-        _ = dbContext;
-        _ = cancellationToken;
-        await Task.CompletedTask;
     }
 }

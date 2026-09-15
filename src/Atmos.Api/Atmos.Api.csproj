@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <ItemGroup>
+      <!-- Atmos.Database is already reachable through Atmos.Services.Api, but this
+           project now uses it directly (ConfigureNpgsql and MigrateAtmosDatabaseAsync
+           in Program.cs), so the reference is explicit. -->
+      <ProjectReference Include="..\Atmos.Database\Atmos.Database.csproj" />
       <ProjectReference Include="..\Atmos.Services.Api\Atmos.Services.Api.csproj" />
     </ItemGroup>
 
@@ -10,6 +14,11 @@
            descriptions. Analyzers do not flow through a ProjectReference, so relying
            on Atmos.Services.Api's reference leaves this project's comments unread. -->
       <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+      <!-- This project is the startup project for the EF tooling; Atmos.Database is the
+           target project, and appsettings.Development.yaml.example spells out the
+           commands. Program.cs guards on EF.IsDesignTime so the tooling builds only the
+           DbContext rather than the whole API. -->
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
     </ItemGroup>
 
     <ItemGroup>

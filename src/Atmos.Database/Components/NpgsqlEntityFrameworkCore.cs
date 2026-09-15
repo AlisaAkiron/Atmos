@@ -36,6 +36,7 @@ public static class NpgsqlEntityFrameworkCore
             .WithTracing(tracer =>
             {
                 tracer.AddNpgsql();
+                tracer.AddSource(DatabaseMigration.ActivitySourceName);
             });
 
         return builder;

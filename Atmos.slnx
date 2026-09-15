@@ -26,7 +26,4 @@
   <Folder Name="/Tests/">
     <Project Path="tests/Atmos.Tests.Unit/Atmos.Tests.Unit.csproj" />
   </Folder>
-  <Folder Name="/Worker/">
-    <Project Path="src/Atmos.Worker.Migrator/Atmos.Worker.Migrator.csproj" />
-  </Folder>
 </Solution>

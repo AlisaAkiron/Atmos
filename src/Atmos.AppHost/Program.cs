@@ -39,16 +39,12 @@ var mailpit = builder
 
 #endregion
 
-var migrator = builder.AddProject<Atmos_Worker_Migrator>("worker-migrator")
-    .WithReference(postgres, "PostgreSQL")
-    .WaitFor(postgres);
-
 var api = builder
     .AddProject<Atmos_Api>("api")
     .WithReference(postgres, "PostgreSQL")
     .WithReference(mailpit, "Smtp")
     .WithEnvironment("Media__Provider", useS3Media ? "S3" : "Local")
-    .WaitForCompletion(migrator);
+    .WaitFor(postgres);
 
 if (useS3Media)
 {

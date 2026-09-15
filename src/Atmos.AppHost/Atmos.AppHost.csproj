@@ -18,7 +18,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Atmos.Api\Atmos.Api.csproj" />
-      <ProjectReference Include="..\Atmos.Worker.Migrator\Atmos.Worker.Migrator.csproj" />
     </ItemGroup>
 
 </Project>

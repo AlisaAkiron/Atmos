@@ -5,6 +5,25 @@ Serilog:
   MinimumLevel:
     Default: Debug
 
+# The API creates the database and applies pending migrations at startup, before it
+# accepts requests. EF takes a database-wide lock while migrating, so several instances
+# booting at once is safe.
+#
+# Set AutoMigrate to false to leave the schema to a separate deployment step - the API
+# then needs no permission to alter it. There is no migration worker to run instead, so
+# apply them with the EF tooling, from the repository root:
+#
+#     dotnet ef database update \
+#       --project src/Atmos.Database --startup-project src/Atmos.Api
+#
+# Adding a migration uses the same project pair:
+#
+#     dotnet ef migrations add <Name> \
+#       --project src/Atmos.Database --startup-project src/Atmos.Api
+#
+# Database:
+#   AutoMigrate: true
+
 Authentication:
   # The site owner role has no configuration. Sign in once to provision the
   # account, then set user.is_site_owner = true on that row directly in the
