@@ -27,4 +27,17 @@
       </None>
     </ItemGroup>
 
+    <!-- EF tooling needs Design (and its Roslyn dependency) in bin, but nothing needs
+         it at runtime. Strip from publish only: ~23 MB of the image. -->
+    <Target Name="RemoveDesignTimeAssetsFromPublish" AfterTargets="ComputeFilesToPublish">
+        <ItemGroup>
+            <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                Condition="$([System.String]::Copy('%(Filename)').StartsWith('Microsoft.CodeAnalysis'))
+                        or $([System.String]::Copy('%(Filename)').StartsWith('Microsoft.Build'))
+                        or '%(Filename)' == 'Microsoft.EntityFrameworkCore.Design'
+                        or '%(Filename)' == 'Humanizer'
+                        or '%(Filename)' == 'Mono.TextTemplating'" />
+        </ItemGroup>
+    </Target>
+
 </Project>
