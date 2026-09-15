@@ -97,11 +97,6 @@ else
         .WithEnvironment("Media__PublicBaseUrl", ReferenceExpression.Create($"{api.GetEndpoint("https")}/media"));
 }
 
-builder
-    .AddProject<Atmos_Web>("web")
-    .WithReference(api)
-    .WaitForCompletion(migrator);
-
 var app = builder.Build();
 
 await app.RunAsync();
