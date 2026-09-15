@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel superseded PR runs only. Cancelling a push to main would abandon a
+# half-finished publish and leave the registry mid-update.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # global.json pins the test runner, not the SDK, so the version lives here
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      # setup-dotnet's own cache needs packages.lock.json, which central package
+      # management does not produce. Key on what actually decides the graph.
+      - uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', 'global.json', 'src/**/*.csproj', 'tests/**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore Atmos.slnx
+
+      # TreatWarningsAsErrors and EnforceCodeStyleInBuild are already on, so this
+      # is the lint and style gate too. No separate format step.
+      - name: Build
+        run: dotnet build Atmos.slnx --configuration Release --no-restore
+
+      # Not `dotnet test`: against this Microsoft.Testing.Platform runner it
+      # discovers zero tests and passes vacuously.
+      - name: Test
+        run: dotnet run --project tests/Atmos.Tests.Unit --configuration Release --no-build
+
+  image:
+    name: Publish image
+    needs: test
+    # Fork PRs never reach the registry, so no secret is exposed to untrusted code.
+    # Restricting to main and v* also guarantees the tag list below is non-empty:
+    # a manual dispatch from a side branch matches none of the tag rules.
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Lowercases the image name: github.repository is AlisaAkiron/Atmos and
+      # GHCR rejects uppercase paths.
+      - name: Tags and labels
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=edge,branch=main
+            type=sha,prefix=sha-,format=short,enable=${{ github.ref == 'refs/heads/main' }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+          # latest=auto: applied on a v* tag, never on main
+          flavor: latest=auto
+
+      # The build stage cross-compiles natively, but the runtime stage's apt-get
+      # runs as the target architecture and needs emulation.
+      - uses: docker/setup-qemu-action@v4
+        with:
+          platforms: arm64
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
