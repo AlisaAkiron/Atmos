@@ -60,6 +60,34 @@ Email:
 #   AllowedOrigins:
 #     - https://app.example.com
 
+# Reverse proxy. Leave this off when Kestrel is reached directly, as it is in
+# development - X-Forwarded-* are supplied by the caller, and only a proxy that
+# overwrites them makes them worth believing.
+#
+# Turn it on for any deployment that terminates TLS in front of the app. Without
+# it the scheme reads as http, which builds an OIDC redirect_uri the provider
+# rejects and suppresses every Secure cookie, and the client address reads as the
+# proxy's, which collapses per-IP rate limiting onto one partition.
+#
+# Leaving KnownProxies and KnownNetworks empty trusts any proxy. That is correct
+# when nothing can reach the app except through the ingress, and wrong the moment
+# the app's own port is reachable - anyone could then claim any address and
+# scheme. Set either list to narrow it.
+#
+# Network:
+#   UseForwardedHeaders: true
+#   ForwardLimit: 1              # proxy hops to trust; a CDN in front of an ingress is 2
+#   KnownProxies:
+#     - 10.0.0.5
+#   KnownNetworks:
+#     - 10.0.0.0/8
+
+# Host header allowlist. X-Forwarded-Host is honoured once the block above is on,
+# and it is as forgeable as the rest, so name the public hostnames here rather
+# than leaving the "*" default in production.
+#
+# AllowedHosts: "atmos.example.com;www.atmos.example.com"
+
 # Media storage. When running via the AppHost these are injected as env vars -
 # no manual config needed. Fill in only when running the API standalone.
 # Media:

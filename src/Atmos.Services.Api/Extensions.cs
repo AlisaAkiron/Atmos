@@ -26,6 +26,7 @@ public static class Extensions
 {
     public static IHostApplicationBuilder AddAtmosApiServices(this IHostApplicationBuilder builder)
     {
+        builder.ConfigureNetwork();
         builder.ConfigureNpgsql();
         builder.ConfigureCaching();
         builder.ConfigureIdentity();
@@ -64,6 +65,8 @@ public static class Extensions
     public static WebApplication MapAtmosApiEndpoints(this WebApplication app, Action<IEndpointRouteBuilder> configureEndpoints)
     {
         var isProduction = app.Environment.IsProduction();
+
+        app.UseForwardedHeaders();
 
         app.UseExceptionHandler(builder =>
         {
