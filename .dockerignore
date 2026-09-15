@@ -1,0 +1,38 @@
+# Secrets. Atmos.Api.csproj copies appsettings*.yaml to the publish output, and that
+# glob matches the development file - which is where real client secrets live. It is
+# gitignored, so a clean checkout has none, but `docker build .` reads the working
+# tree rather than the index. Excluded here so a local build cannot bake one in.
+**/appsettings.Development.yaml
+**/appsettings.development.yaml
+
+# Build output. Beyond size, host artefacts from a different OS and architecture
+# have no business in a Linux build.
+**/bin/
+**/obj/
+TestResults/
+
+# Not part of the API image
+tests/
+src/Atmos.AppHost/
+.local-media/
+
+# Tooling, history and editor state
+.git/
+.gitattributes
+.gitignore
+.idea/
+.vs/
+.vscode/
+.claude/
+.superpowers/
+docs/
+**/*.user
+**/*.DotSettings
+**/*.DotSettings.user
+
+# Not read by the build
+Dockerfile
+.dockerignore
+README.md
+LICENSE
+Atmos.slnx
