@@ -2,6 +2,7 @@ using Atmos.Api.Endpoints.Dto;
 using Atmos.Services.Api;
 using Atmos.Services.Api.Abstract;
 using Atmos.Services.Api.Enums;
+using Atmos.Services.Api.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -62,8 +63,8 @@ public partial class AuthenticationEndpoints : IEndpointMapper
     [EndpointSummary("Initiate authentication")]
     [EndpointDescription(
         "Starts a sign-in by challenging the named external provider. Only OAuth and OpenID Connect providers can be " +
-        "initiated here; return_url must be a local path, and the browser lands back on it once the session cookie is " +
-        "set."
+        "initiated here; return_url must be a local path or an origin this deployment allows, and the browser lands " +
+        "back on it once the session cookie is set."
     )]
     private static Results<ChallengeHttpResult, NotFound, BadRequest<string>> InitiateAuthentication(
         [FromServices] IOptions<AuthenticationOptions> authenticationOptions,
@@ -71,9 +72,9 @@ public partial class AuthenticationEndpoints : IEndpointMapper
         [FromQuery(Name = "return_url")] string? returnUrl)
     {
         returnUrl ??= "/";
-        if (IsLocalUrl(returnUrl) is false)
+        if (ReturnUrlPolicy.IsAllowed(returnUrl, authenticationOptions.Value.ReturnUrls) is false)
         {
-            return TypedResults.BadRequest("return_url must be a local URL");
+            return TypedResults.BadRequest("return_url must be a local path or an allowed origin");
         }
 
         // Only remote (challengeable) providers can be initiated here
@@ -141,16 +142,5 @@ public partial class AuthenticationEndpoints : IEndpointMapper
         }
 
         return result;
-    }
-
-    private static bool IsLocalUrl(string url)
-    {
-        if (string.IsNullOrEmpty(url) || url[0] != '/')
-        {
-            return false;
-        }
-
-        // "//host" and "/\host" are treated as protocol-relative absolute URLs by browsers
-        return url.Length == 1 || (url[1] != '/' && url[1] != '\\');
     }
 }

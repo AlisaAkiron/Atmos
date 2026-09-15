@@ -20,8 +20,4 @@
         <PackageReference Include="TUnit" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Compile Remove="Authentication\ReturnUrlPolicyTests.cs" />
-    </ItemGroup>
-
 </Project>

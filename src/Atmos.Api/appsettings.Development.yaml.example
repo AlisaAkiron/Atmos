@@ -28,6 +28,23 @@ Authentication:
   # The site owner role has no configuration. Sign in once to provision the
   # account, then set user.is_site_owner = true on that row directly in the
   # database; the role claim is issued from it on the account's next sign-in.
+  #
+  # Origins a completed sign-in may return the browser to. Leave it out when the
+  # frontend is proxied onto the API's own origin - return_url is then a local
+  # path like "/" and already works. Set it when the frontend has an origin of
+  # its own, or sign-in lands on the API host and dead-ends there.
+  #
+  # Matched on scheme, host and port exactly, so list every origin you use.
+  #
+  # NOTE: if the frontend is on a different registrable domain rather than a
+  # sibling subdomain, this alone is not enough - the session cookie is
+  # SameSite=Lax and browsers will not send it on cross-site requests at all, so
+  # authenticated calls fail silently after a successful sign-in. That needs
+  # SameSite=None (see AtmosIdentity.ConfigureIdentity) and is deliberately not
+  # done here.
+  #
+  # ReturnUrls:
+  #   - https://atmos.example.com
   OpenIdConnect:
     - Name: my-idp
       DisplayName: My Identity Provider
