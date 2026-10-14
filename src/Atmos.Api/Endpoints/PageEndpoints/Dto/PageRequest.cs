@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 namespace Atmos.Api.Endpoints.Dto;
 
 /// <summary>
@@ -7,6 +8,6 @@ namespace Atmos.Api.Endpoints.Dto;
 /// <param name="Title">Page title.</param>
 /// <param name="Content">Full page body, in Markdown.</param>
 public record PageRequest(
-    string Slug,
-    string Title,
-    string Content);
+    [property: Required, StringLength(128)] string Slug,
+    [property: Required, StringLength(256)] string Title,
+    [property: Required(AllowEmptyStrings = true), StringLength(1_000_000)] string Content);

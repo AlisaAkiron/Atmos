@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 namespace Atmos.Api.Endpoints.Dto;
 
 /// <summary>
@@ -6,5 +7,5 @@ namespace Atmos.Api.Endpoints.Dto;
 /// <param name="Slug">URL segment to use. Must be a valid slug and not already taken.</param>
 /// <param name="Name">Display name.</param>
 public record TagRequest(
-    string Slug,
-    string Name);
+    [property: Required, StringLength(128)] string Slug,
+    [property: Required, StringLength(128)] string Name);

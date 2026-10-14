@@ -42,10 +42,12 @@ RUN dotnet publish src/Atmos.Api/Atmos.Api.csproj \
 
 FROM debian:trixie-slim AS runtime
 
-# debian-slim ships none of these; the names are trixie's
+# debian-slim ships none of these; the names are trixie's. libgssapi-krb5-2 is for
+# Npgsql, which probes for Kerberos on every connection and logs an error without it.
 RUN apt-get update \
     && apt-get install --no-install-recommends --yes \
         ca-certificates \
+        libgssapi-krb5-2 \
         libicu76 \
         libssl3t64 \
     && rm -rf /var/lib/apt/lists/*

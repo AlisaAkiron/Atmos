@@ -56,7 +56,10 @@ public partial class ArticleEndpoints : IEndpointMapper
         var totalCount = await query.CountAsync(ct);
 
         var items = await query
+            // ArticleId breaks ties: two articles published in the same instant would
+            // otherwise order arbitrarily per query, repeating or skipping across pages
             .OrderByDescending(x => x.PublishedAt)
+            .ThenByDescending(x => x.ArticleId)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(x => new ArticleListItemDto(

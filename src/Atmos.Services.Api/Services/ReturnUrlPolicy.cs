@@ -70,7 +70,7 @@ public static class ReturnUrlPolicy
             return false;
         }
 
-        // "//host" and "/\host" are read as protocol-relative absolute URLs by browsers,
+        // browsers read "//host" and "/\host" as protocol-relative absolute URLs,
         // so they leave the origin despite starting with a slash
         return url.Length == 1 || (url[1] != '/' && url[1] != '\\');
     }

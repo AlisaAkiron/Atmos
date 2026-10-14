@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 namespace Atmos.Api.Endpoints.Dto;
 
 /// <summary>
@@ -7,6 +8,6 @@ namespace Atmos.Api.Endpoints.Dto;
 /// <param name="Name">Display name.</param>
 /// <param name="Description">Longer blurb for the category page. Null for none.</param>
 public record CategoryRequest(
-    string Slug,
-    string Name,
-    string? Description);
+    [property: Required, StringLength(128)] string Slug,
+    [property: Required, StringLength(128)] string Name,
+    [property: StringLength(1024)] string? Description);

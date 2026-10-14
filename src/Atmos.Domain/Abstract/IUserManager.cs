@@ -34,8 +34,8 @@ public interface IUserManager
     /// Finds the user holding an email address.
     /// </summary>
     /// <remarks>
-    /// An address belongs to at most one account, which is what makes it usable as a
-    /// uniqueness check before attaching one.
+    /// An account has at most one address and an address belongs to at most one
+    /// account, enforced by a unique index.
     /// </remarks>
     public Task<User?> GetUserByEmailAsync(string email, bool includeDetails = false);
 
@@ -62,16 +62,16 @@ public interface IUserManager
     /// </summary>
     /// <param name="userId">ID for the new account; supplied by the caller rather than generated here.</param>
     /// <param name="nickname">Display name.</param>
-    /// <param name="emails">Addresses to attach, each of which must be unclaimed.</param>
+    /// <param name="email">Address to attach, which must be unclaimed, or null for none.</param>
     /// <param name="noSave">Defer the save to a later call.</param>
-    /// <exception cref="InvalidOperationException">Any address already belongs to another account.</exception>
-    public Task<User> CreateUserAsync(Guid userId, string nickname, List<string> emails, bool noSave = false);
+    /// <exception cref="InvalidOperationException">The address already belongs to another account.</exception>
+    public Task<User> CreateUserAsync(Guid userId, string nickname, string? email, bool noSave = false);
 
     /// <summary>
-    /// Attaches an email address to an account, doing nothing if it is already there.
+    /// Sets the account's email address, replacing whatever was there. Null clears it.
     /// </summary>
     /// <exception cref="InvalidOperationException">The address already belongs to another account.</exception>
-    public Task<User> AddEmailAsync(User user, string email, bool noSave = false);
+    public Task<User> SetEmailAsync(User user, string? email, bool noSave = false);
 
     /// <summary>
     /// Links an external login to an account.
@@ -96,10 +96,10 @@ public interface IUserManager
     public Task<User> AddWebAuthnAsync(User user, byte[] credentialId, byte[] publicKey, byte[] userHandle, string credType, Guid aaGuid, long signCount, bool noSave = false);
 
     /// <summary>
-    /// Resolves the account by ID, then attaches an email address to it.
+    /// Resolves the account by ID, then sets its email address.
     /// </summary>
     /// <exception cref="InvalidOperationException">No account has this ID, or the address is taken.</exception>
-    public Task<User> AddEmailAsync(Guid userId, string email, bool noSave = false);
+    public Task<User> SetEmailAsync(Guid userId, string? email, bool noSave = false);
 
     /// <summary>
     /// Resolves the account by ID, then links an external login to it.

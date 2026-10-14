@@ -16,6 +16,9 @@ namespace Atmos.Api.Endpoints;
 
 public partial class PageEndpoints
 {
+    private const int DefaultPageSize = 20;
+    private const int MaxPageSize = 100;
+
     private static void MapAdminEndpoints(IEndpointRouteBuilder endpoints)
     {
         var adminGroup = endpoints.MapGroup("/admin/pages")
@@ -33,17 +36,30 @@ public partial class PageEndpoints
     }
 
     [EndpointSummary("List pages (admin)")]
-    [EndpointDescription("Returns every page, draft and published alike.")]
-    private static async Task<Ok<List<PageAdminDto>>> GetPagesAdmin(
+    [EndpointDescription(
+        "Returns pages by slug, draft and published alike, bodies included. A page below 1 is clamped, and pageSize " +
+        "is clamped to the server maximum."
+    )]
+    private static async Task<Ok<PageAdminListResponse>> GetPagesAdmin(
         [FromServices] AtmosDbContext dbContext,
-        CancellationToken ct)
+        [FromQuery(Name = "page")] int page = 1,
+        [FromQuery(Name = "pageSize")] int pageSize = DefaultPageSize,
+        CancellationToken ct = default)
     {
+        page = Math.Max(page, 1);
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
+        var totalCount = await dbContext.Pages.CountAsync(ct);
+
+        // Bodies are included, so an unpaginated listing grows with the site
         var pages = await dbContext.Pages
             .OrderBy(x => x.Slug)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(x => new PageAdminDto(x.PageId, x.Slug, x.Title, x.Content, x.PublishedAt, x.CreateAt, x.UpdateAt))
             .ToListAsync(ct);
 
-        return TypedResults.Ok(pages);
+        return TypedResults.Ok(new PageAdminListResponse(totalCount, page, pageSize, pages));
     }
 
     [EndpointSummary("Get page (admin)")]

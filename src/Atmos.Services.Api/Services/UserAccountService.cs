@@ -25,8 +25,9 @@ public class UserAccountService : IUserAccountService
         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()));
         identity.AddClaim(new Claim(ClaimTypes.Name, user.Nickname));
         identity.AddClaim(new Claim(AtmosAuthenticationDefaults.AuthenticationMethodClaimType, authenticationMethod));
+        identity.AddClaim(new Claim(AtmosAuthenticationDefaults.SecurityStampClaimType, user.SecurityStamp.ToString()));
 
-        var email = user.EmailAddresses.FirstOrDefault();
+        var email = user.EmailAddress;
         if (email is not null)
         {
             identity.AddClaim(new Claim(ClaimTypes.Email, email));
@@ -63,13 +64,14 @@ public class UserAccountService : IUserAccountService
 
         // Never auto-link to an existing account by email: providers do not always verify
         // email ownership, and silently attaching a login would enable account takeover.
-        var emails = new List<string>();
-        if (email is not null && await _userManager.GetUserByEmailAsync(email) is null)
+        // The address is dropped rather than the sign-in refused - the new account is
+        // legitimate, it just does not get to claim an address someone else holds.
+        if (email is not null && await _userManager.GetUserByEmailAsync(email) is not null)
         {
-            emails.Add(email);
+            email = null;
         }
 
-        var user = await _userManager.CreateUserAsync(_guidProvider.Create(), nickname, emails, true);
+        var user = await _userManager.CreateUserAsync(_guidProvider.Create(), nickname, email, true);
         await _userManager.AddSocialLoginAsync(user, provider, identifier);
 
         return user;

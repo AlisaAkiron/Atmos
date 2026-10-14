@@ -23,7 +23,7 @@ public class UserManager : IUserManager
 
     public async Task<User?> GetUserByEmailAsync(string email, bool includeDetails = false)
     {
-        return await GetUserQueryable(includeDetails).FirstOrDefaultAsync(x => x.EmailAddresses.Contains(email));
+        return await GetUserQueryable(includeDetails).FirstOrDefaultAsync(x => x.EmailAddress == email);
     }
 
     public async Task<User?> GetUserBySocialLoginAsync(string platform, string identifier, bool includeDetails = false)
@@ -38,9 +38,9 @@ public class UserManager : IUserManager
             .FirstOrDefaultAsync(x => x.WebAuthnDevices.Any(y => y.CredentialId == credentialId));
     }
 
-    public async Task<User> CreateUserAsync(Guid userId, string nickname, List<string> emails, bool noSave = false)
+    public async Task<User> CreateUserAsync(Guid userId, string nickname, string? email, bool noSave = false)
     {
-        foreach (var email in emails)
+        if (email is not null)
         {
             await EnsureEmailIsFreeAsync(email);
         }
@@ -48,8 +48,9 @@ public class UserManager : IUserManager
         var user = new User
         {
             UserId = userId,
-            EmailAddresses = emails,
+            EmailAddress = email,
             Nickname = nickname,
+            SecurityStamp = _guidProvider.Create()
         };
 
         await _dbContext.Users.AddAsync(user);
@@ -62,11 +63,11 @@ public class UserManager : IUserManager
         return user;
     }
 
-    public async Task<User> AddEmailAsync(Guid userId, string email, bool noSave = false)
+    public async Task<User> SetEmailAsync(Guid userId, string? email, bool noSave = false)
     {
         var user = await GetUserAsync(userId) ?? throw new InvalidOperationException("User not found");
 
-        return await AddEmailAsync(user, email, noSave);
+        return await SetEmailAsync(user, email, noSave);
     }
 
     public async Task<User> AddSocialLoginAsync(Guid userId, string platform, string identifier, bool noSave = false)
@@ -89,16 +90,19 @@ public class UserManager : IUserManager
         return await AddWebAuthnAsync(user, credentialId, publicKey, userHandle, credType, aaGuid, signCount, noSave);
     }
 
-    public async Task<User> AddEmailAsync(User user, string email, bool noSave = false)
+    public async Task<User> SetEmailAsync(User user, string? email, bool noSave = false)
     {
-        if (user.EmailAddresses.Contains(email))
+        if (user.EmailAddress == email)
         {
             return user;
         }
 
-        await EnsureEmailIsFreeAsync(email);
+        if (email is not null)
+        {
+            await EnsureEmailIsFreeAsync(email);
+        }
 
-        user.EmailAddresses.Add(email);
+        user.EmailAddress = email;
 
         if (noSave is false)
         {
@@ -179,6 +183,10 @@ public class UserManager : IUserManager
         user.WebAuthnDevices.Remove(device);
         _dbContext.WebAuthn.Remove(device);
 
+        // Ends every session already issued; otherwise a stolen cookie outlives the
+        // credential it was obtained with
+        user.SecurityStamp = _guidProvider.Create();
+
         if (noSave is false)
         {
             await _dbContext.SaveChangesAsync();
@@ -198,6 +206,8 @@ public class UserManager : IUserManager
         user.SocialLogins.Remove(login);
         _dbContext.SocialLogins.Remove(login);
 
+        user.SecurityStamp = _guidProvider.Create();
+
         if (noSave is false)
         {
             await _dbContext.SaveChangesAsync();
@@ -206,6 +216,10 @@ public class UserManager : IUserManager
         return true;
     }
 
+    /// <remarks>
+    /// A courtesy check that turns the race into an exception with a readable message.
+    /// The unique index on email_address is what actually guarantees it.
+    /// </remarks>
     private async Task EnsureEmailIsFreeAsync(string email)
     {
         var existing = await GetUserByEmailAsync(email);

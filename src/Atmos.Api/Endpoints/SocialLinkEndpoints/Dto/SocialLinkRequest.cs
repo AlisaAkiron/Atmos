@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 namespace Atmos.Api.Endpoints.Dto;
 
 /// <summary>
@@ -10,9 +11,9 @@ namespace Atmos.Api.Endpoints.Dto;
 /// <param name="IconMediaId">Media entry to use as the icon. Must already exist.</param>
 /// <param name="DisplayOrder">Sort position; lower values come first.</param>
 public record SocialLinkRequest(
-    string Url,
-    string Label,
-    string Color,
+    [property: Required, Url, StringLength(2048)] string Url,
+    [property: Required, StringLength(128)] string Label,
+    [property: Required, StringLength(64)] string Color,
     bool Invert,
-    Guid IconMediaId,
+    [property: Required] Guid IconMediaId,
     int DisplayOrder);

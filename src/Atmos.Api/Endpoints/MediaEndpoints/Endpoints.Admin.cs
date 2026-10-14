@@ -19,6 +19,9 @@ namespace Atmos.Api.Endpoints;
 
 public partial class MediaEndpoints
 {
+    private const int DefaultPageSize = 50;
+    private const int MaxPageSize = 200;
+
     private static readonly FileExtensionContentTypeProvider ContentTypeProvider = new();
 
     private static void MapAdminEndpoints(IEndpointRouteBuilder endpoints)
@@ -124,16 +127,22 @@ public partial class MediaEndpoints
 
     [EndpointSummary("List media")]
     [EndpointDescription(
-        "Lists stored media, optionally narrowed to a key prefix or to entries nothing references yet, which is the " +
-        "view for finding orphans worth deleting."
+        "Lists stored media newest-key first, optionally narrowed to a key prefix or to entries nothing references " +
+        "yet, which is the view for finding orphans worth deleting. A page below 1 is clamped, and pageSize is " +
+        "clamped to the server maximum."
     )]
-    private static async Task<Ok<List<MediaAdminDto>>> GetMediaList(
+    private static async Task<Ok<MediaAdminListResponse>> GetMediaList(
         [FromServices] AtmosDbContext dbContext,
         [FromServices] MediaUrlBuilder urlBuilder,
         [FromQuery(Name = "prefix")] string? prefix,
         [FromQuery(Name = "unreferenced")] bool unreferenced = false,
+        [FromQuery(Name = "page")] int page = 1,
+        [FromQuery(Name = "pageSize")] int pageSize = DefaultPageSize,
         CancellationToken ct = default)
     {
+        page = Math.Max(page, 1);
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
         var query = dbContext.Media.AsQueryable();
 
         if (string.IsNullOrEmpty(prefix) is false)
@@ -146,8 +155,12 @@ public partial class MediaEndpoints
             query = query.Where(x => x.References.Count == 0);
         }
 
+        var totalCount = await query.CountAsync(ct);
+
         var items = await query
             .OrderBy(x => x.Key)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(x => new
             {
                 x.MediaId,
@@ -170,7 +183,7 @@ public partial class MediaEndpoints
                     .ToList()))
             .ToList();
 
-        return TypedResults.Ok(result);
+        return TypedResults.Ok(new MediaAdminListResponse(totalCount, page, pageSize, result));
     }
 
     [EndpointSummary("Delete media")]

@@ -42,7 +42,7 @@ public partial class AuthenticationEndpoints
         {
             UserId = user.UserId,
             Nickname = user.Nickname,
-            EmailAddresses = user.EmailAddresses,
+            EmailAddress = user.EmailAddress,
             IsSiteOwner = user.IsSiteOwner,
             AuthenticationMethod = currentUser.Principal?
                 .FindFirstValue(AtmosAuthenticationDefaults.AuthenticationMethodClaimType)

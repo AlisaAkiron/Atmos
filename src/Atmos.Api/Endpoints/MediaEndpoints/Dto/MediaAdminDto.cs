@@ -29,3 +29,16 @@ public record MediaAdminDto(
     string Sha256,
     int RefCount,
     List<MediaReferrerDto> Referrers);
+
+/// <summary>
+/// A page of the media list.
+/// </summary>
+/// <param name="TotalCount">Entries matching the query across every page.</param>
+/// <param name="Page">Page number this response covers, counting from 1.</param>
+/// <param name="PageSize">Entries per page, after clamping to the server maximum.</param>
+/// <param name="Items">The entries on this page, ordered by key.</param>
+public record MediaAdminListResponse(
+    int TotalCount,
+    int Page,
+    int PageSize,
+    List<MediaAdminDto> Items);

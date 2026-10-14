@@ -47,6 +47,7 @@ public partial class ArticleEndpoints
 
         var items = await dbContext.Articles
             .OrderByDescending(x => x.UpdateAt)
+            .ThenByDescending(x => x.ArticleId)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(x => new ArticleAdminListItemDto(

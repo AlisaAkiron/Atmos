@@ -1,17 +1,35 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace Atmos.Database.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "atmos_cache",
+                columns: table => new
+                {
+                    key = table.Column<string>(type: "text", nullable: false),
+                    value = table.Column<byte[]>(type: "bytea", nullable: false),
+                    expire_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    absolute_expire_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    sliding_expiration_ticks = table.Column<long>(type: "bigint", nullable: true),
+                    tags = table.Column<string[]>(type: "text[]", nullable: false),
+                    create_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    update_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_atmos_cache", x => x.key);
+                });
+
             migrationBuilder.CreateTable(
                 name: "category",
                 columns: table => new
@@ -26,6 +44,20 @@ namespace Atmos.Database.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_category", x => x.category_id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "data_protection_key",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    friendly_name = table.Column<string>(type: "text", nullable: true),
+                    xml = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_data_protection_key", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -82,9 +114,10 @@ namespace Atmos.Database.Migrations
                 columns: table => new
                 {
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    email_addresses = table.Column<List<string>>(type: "text[]", nullable: false),
+                    email_address = table.Column<string>(type: "text", nullable: true),
                     nickname = table.Column<string>(type: "text", nullable: false),
                     is_site_owner = table.Column<bool>(type: "boolean", nullable: false),
+                    security_stamp = table.Column<Guid>(type: "uuid", nullable: false),
                     create_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     update_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
@@ -297,6 +330,17 @@ namespace Atmos.Database.Migrations
                 column: "tag_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_atmos_cache_expire_at",
+                table: "atmos_cache",
+                column: "expire_at");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_atmos_cache_tags",
+                table: "atmos_cache",
+                column: "tags")
+                .Annotation("Npgsql:IndexMethod", "GIN");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_category_slug",
                 table: "category",
                 column: "slug",
@@ -364,10 +408,10 @@ namespace Atmos.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_user_email_addresses",
+                name: "IX_user_email_address",
                 table: "user",
-                column: "email_addresses")
-                .Annotation("Npgsql:IndexMethod", "GIN");
+                column: "email_address",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_webauthn_user_id",
@@ -380,6 +424,12 @@ namespace Atmos.Database.Migrations
         {
             migrationBuilder.DropTable(
                 name: "article_tag");
+
+            migrationBuilder.DropTable(
+                name: "atmos_cache");
+
+            migrationBuilder.DropTable(
+                name: "data_protection_key");
 
             migrationBuilder.DropTable(
                 name: "friend_link");

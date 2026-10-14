@@ -22,8 +22,8 @@ public record AccountDto
     /// <summary>
     /// Every email address known for the account, across all linked logins.
     /// </summary>
-    [JsonPropertyName("email_addresses")]
-    public List<string> EmailAddresses { get; set; } = [];
+    [JsonPropertyName("email_address")]
+    public string? EmailAddress { get; set; }
 
     /// <summary>
     /// Whether this account holds the site owner role, which is what gates every admin route.

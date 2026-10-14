@@ -9,8 +9,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        builder.HasIndex(x => x.EmailAddresses)
-            .HasMethod("GIN");
+        // Unique, and nullable so the many accounts whose provider gave no address do
+        // not collide: PostgreSQL treats NULLs as distinct in a unique index.
+        builder.HasIndex(x => x.EmailAddress)
+            .IsUnique();
 
         builder.HasMany(x => x.SocialLogins)
             .WithOne(x => x.User)

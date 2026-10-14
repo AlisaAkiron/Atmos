@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 namespace Atmos.Api.Endpoints.Dto;
 
 /// <summary>
@@ -9,8 +10,8 @@ namespace Atmos.Api.Endpoints.Dto;
 /// <param name="AvatarMediaId">Media entry to use as the avatar. Must already exist; null for no avatar.</param>
 /// <param name="DisplayOrder">Sort position; lower values come first.</param>
 public record FriendLinkRequest(
-    string Url,
-    string Title,
-    string Description,
+    [property: Required, Url, StringLength(2048)] string Url,
+    [property: Required, StringLength(256)] string Title,
+    [property: Required(AllowEmptyStrings = true), StringLength(1024)] string Description,
     Guid? AvatarMediaId,
     int DisplayOrder);

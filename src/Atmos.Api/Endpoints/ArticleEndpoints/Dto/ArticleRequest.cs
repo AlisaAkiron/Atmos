@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 namespace Atmos.Api.Endpoints.Dto;
 
 /// <summary>
@@ -10,9 +11,9 @@ namespace Atmos.Api.Endpoints.Dto;
 /// <param name="CategorySlug">Slug of an existing category to file under, or null to leave it uncategorised.</param>
 /// <param name="TagSlugs">Slugs of existing tags to attach. Every slug must already exist.</param>
 public record ArticleRequest(
-    string Slug,
-    string Title,
-    string? Summary,
-    string Content,
-    string? CategorySlug,
-    List<string> TagSlugs);
+    [property: Required, StringLength(128)] string Slug,
+    [property: Required, StringLength(256)] string Title,
+    [property: StringLength(1024)] string? Summary,
+    [property: Required(AllowEmptyStrings = true), StringLength(1_000_000)] string Content,
+    [property: StringLength(128)] string? CategorySlug,
+    [property: Required, MaxLength(64)] List<string> TagSlugs);

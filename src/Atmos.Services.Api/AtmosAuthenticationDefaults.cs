@@ -13,6 +13,11 @@ public static class AtmosAuthenticationDefaults
     public const string AuthenticationMethodClaimType = "atmos:authentication_method";
 
     /// <summary>
+    /// Claim type carrying the account's security stamp, re-checked on every request.
+    /// </summary>
+    public const string SecurityStampClaimType = "atmos:security_stamp";
+
+    /// <summary>
     /// Rate limiting policy applied to credential-related authentication endpoints.
     /// </summary>
     public const string RateLimitPolicy = "authentication";

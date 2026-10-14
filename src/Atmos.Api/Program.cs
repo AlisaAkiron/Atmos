@@ -27,6 +27,10 @@ else
     builder.Services.AddOpenApi(
         OpenApiConfigurator.DocumentName(builder.Configuration),
         OpenApiConfigurator.ConfigureDocument);
+
+    // Registered here for the same reason: the validation source generator discovers
+    // request types from its own compilation, which is where the DTOs live.
+    builder.Services.AddValidation();
 }
 
 var app = builder.Build();

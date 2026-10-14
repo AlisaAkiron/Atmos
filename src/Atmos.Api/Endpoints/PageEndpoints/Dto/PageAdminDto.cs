@@ -18,3 +18,16 @@ public record PageAdminDto(
     DateTimeOffset? PublishedAt,
     DateTimeOffset CreateAt,
     DateTimeOffset UpdateAt);
+
+/// <summary>
+/// A page of the admin page list.
+/// </summary>
+/// <param name="TotalCount">Pages across every page of results.</param>
+/// <param name="Page">Page number this response covers, counting from 1.</param>
+/// <param name="PageSize">Pages per page, after clamping to the server maximum.</param>
+/// <param name="Items">The pages in this response, ordered by slug.</param>
+public record PageAdminListResponse(
+    int TotalCount,
+    int Page,
+    int PageSize,
+    List<PageAdminDto> Items);

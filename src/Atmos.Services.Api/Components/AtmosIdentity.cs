@@ -3,6 +3,8 @@ using Atmos.Common.Extensions;
 using Atmos.Services.Api.Abstract;
 using Atmos.Services.Api.Enums;
 using Atmos.Services.Api.Options.Authentication;
+using Atmos.Services.Api.Services;
+using Atmos.Domain.Abstract;
 using Fido2NetLib;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -49,6 +51,10 @@ public static class AtmosIdentity
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 return Task.CompletedTask;
             };
+
+            // The cookie is self-contained and lives 14 days, so without this nothing
+            // that changes in the database reaches an existing session
+            o.Events.OnValidatePrincipal = OnValidatePrincipalAsync;
         });
 
         var authenticationOptions = builder.Configuration
@@ -147,6 +153,41 @@ public static class AtmosIdentity
         }
 
         return builder;
+    }
+
+    /// <summary>
+    /// Re-checks an arriving cookie against the account it claims, and ends the session
+    /// when they no longer agree.
+    /// </summary>
+    /// <remarks>
+    /// Costs one lookup per authenticated request. Deliberate: a window in which a
+    /// revoked credential still works is worth less than the round trip, and anything
+    /// reaching an authorized endpoint queries the database regardless.
+    /// </remarks>
+    private static async Task OnValidatePrincipalAsync(CookieValidatePrincipalContext context)
+    {
+        var principal = context.Principal;
+        if (principal?.Identity?.IsAuthenticated is not true)
+        {
+            return;
+        }
+
+        var user = Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)
+            ? await context.HttpContext.RequestServices.GetRequiredService<IUserManager>().GetUserAsync(userId)
+            : null;
+
+        var stamp = Guid.TryParse(
+            principal.FindFirstValue(AtmosAuthenticationDefaults.SecurityStampClaimType), out var parsed)
+            ? parsed
+            : (Guid?)null;
+
+        if (SessionValidator.IsCurrent(user, stamp, principal.IsInRole(AtmosAuthenticationDefaults.SiteOwnerRole)))
+        {
+            return;
+        }
+
+        context.RejectPrincipal();
+        await context.HttpContext.SignOutAsync(AtmosAuthenticationDefaults.Scheme);
     }
 
     /// <summary>
